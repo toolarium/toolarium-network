@@ -2,9 +2,14 @@
  * build.gradle
  *
  * Copyright by toolarium-network, all rights reserved.
- * MIT License: https://mit-license.org
  */
 apply from: "https://raw.githubusercontent.com/toolarium/common-gradle-build/master/gradle/common.gradle"
+
+
+/***************************************************************************************
+ * define the main class name
+ ***************************************************************************************/
+mainClassName = "com.github.toolarium.network.scanner.PortScannerClient"
 
 
 /****************************************************************************************
@@ -17,7 +22,5 @@ dependencies {
     //implementation "net.sf.jptools:jptools:1.7.7"
     //implementation "net.sf.jptools:jptools:1.7.7:slf4j-redirect"
 
-    // logging
-    implementation 'org.slf4j:slf4j-api:1.7.30'
-    testRuntimeOnly 'ch.qos.logback:logback-classic:1.2.3'
+    testRuntimeOnly "org.junit.platform:junit-platform-commons:1.7.0"
 }
