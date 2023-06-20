@@ -30,6 +30,6 @@ dependencies {
 <dependency>
     <groupId>com.github.toolarium</groupId>
     <artifactId>toolarium-network</artifactId>
-    <version>0.9.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
