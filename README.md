@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/github/license/toolarium/toolarium-network)](https://github.com/toolarium/toolarium-network/blob/master/LICENSE)
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.toolarium/toolarium-network/0.6.1)](https://search.maven.org/artifact/com.github.toolarium/toolarium-network/0.6.1/jar)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.toolarium/toolarium-network/0.6.2)](https://search.maven.org/artifact/com.github.toolarium/toolarium-network/0.6.2/jar)
 [![javadoc](https://javadoc.io/badge2/com.github.toolarium/toolarium-network/javadoc.svg)](https://javadoc.io/doc/com.github.toolarium/toolarium-network)
 
 # toolarium-network
@@ -20,7 +20,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ```groovy
 dependencies {
-    implementation "com.github.toolarium:toolarium-network:0.6.1"
+    implementation "com.github.toolarium:toolarium-network:0.6.2"
 }
 ```
 
@@ -30,6 +30,6 @@ dependencies {
 <dependency>
     <groupId>com.github.toolarium</groupId>
     <artifactId>toolarium-network</artifactId>
-    <version>0.6.1</version>
+    <version>0.6.2</version>
 </dependency>
 ```
