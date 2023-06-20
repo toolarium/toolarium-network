@@ -3,6 +3,10 @@
  *
  * Copyright by toolarium-network, all rights reserved.
  */
+plugins {
+  id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
 apply from: "https://raw.githubusercontent.com/toolarium/common-gradle-build/master/gradle/common.gradle"
 
 
