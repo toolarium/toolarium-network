@@ -30,7 +30,7 @@ public class IPV6Formatter {
      * For example, original IPv6 = 1234:0fd2:5621:0001:0089:0000:0000:4500, compressed IPv6 = 1234:fd2:5621:1:89:0:0:4500
      * <li>Rule 3: When zeros (0s) are present in discontinuous pattern in IPv6 address notation, then at only one junction, the zeros (0s) are replaced with ::.
      * For example, original IPv6 = 2001:1234:0000:0000:1b12:0000:0000:1a13, ompressed IPv6 = 2001:1234::1b12:0:0:1a13 or IPv6 = 2001:1234:0:0:1b12::1a13
-     *
+     * @see <a href="https://iplocation.io/">iplocation.io/</a>
      * @param ipV6Address the address to short
      * @return The shorten ipv6 address
      */

@@ -61,7 +61,7 @@ public class PortScannerImpl implements IPortScanner {
     @Override
     public List<IPortScanResult> scan(String scanAddress, int inputStartPort, int inputEndPort, Boolean filterIsAvailable, IPortScanListener... portScannerListeners) {
         // validate input
-        final int startPort = prepareIntegerValue(inputStartPort, MIN_PORT, MIN_PORT);
+        final int startPort = prepareIntegerValue(inputStartPort, MIN_PORT, inputStartPort);
         final int endPort = prepareIntegerValue(inputEndPort, startPort, MAX_PORT);
         final List<String> hostList = prepareScanAddressList(scanAddress);
 

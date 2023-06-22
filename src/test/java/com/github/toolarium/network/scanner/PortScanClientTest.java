@@ -19,7 +19,7 @@ public class PortScanClientTest {
      */
     @Test 
     public void test() {
-        PortScannerClient.main(new String[] {});
+        PortScannerClient.main(new String[] {"--startPort=10", "--endPort=12"});
     }
     
 }
