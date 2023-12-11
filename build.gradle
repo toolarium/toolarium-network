@@ -22,9 +22,13 @@ mainClassName = "com.github.toolarium.network.scanner.PortScannerClient"
 dependencies {
     // see https://docs.gradle.org/current/userguide/java_library_plugin.html
 
-    // utilities
-    //implementation "net.sf.jptools:jptools:1.7.7"
-    //implementation "net.sf.jptools:jptools:1.7.7:slf4j-redirect"
+    implementation "com.github.toolarium:toolarium-security:1.0.3"
 
-    testRuntimeOnly "org.junit.platform:junit-platform-commons:1.7.0"
+    // common library used for test cases
+    implementation "com.github.toolarium:toolarium-common:0.4.0"
+
+    // logging
+    implementation 'org.slf4j:slf4j-api:1.7.30'
+    testImplementation 'org.slf4j:jul-to-slf4j:1.7.33'
+    testRuntimeOnly 'ch.qos.logback:logback-classic:1.2.3'
 }

@@ -16,6 +16,7 @@ import com.github.toolarium.network.scanner.listener.IPortScanListener;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -81,6 +82,8 @@ public class PortScannerImpl implements IPortScanner {
             for (int port = startPort; port <= endPort; port++) {
                 futures.add(prepareNetworkAddressScanThread(es, hostAddress, port, timeout, portScanListenerList));
             }
+            
+            Collections.shuffle(futures); 
         }
 
         es.shutdown();
@@ -90,6 +93,7 @@ public class PortScannerImpl implements IPortScanner {
             prepareResultSet(filterIsAvailable, result, f);
         }
 
+        LOG.fine("Ended.");
         return result;
     }
 
