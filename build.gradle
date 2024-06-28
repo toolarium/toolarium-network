@@ -20,15 +20,14 @@ mainClassName = "com.github.toolarium.network.scanner.PortScannerClient"
  * Define project dependencies
  ****************************************************************************************/
 dependencies {
-    // see https://docs.gradle.org/current/userguide/java_library_plugin.html
 
-    implementation "com.github.toolarium:toolarium-security:1.0.3"
+    implementation "com.github.toolarium:toolarium-security:1.1.2"
 
     // common library used for test cases
-    implementation "com.github.toolarium:toolarium-common:0.4.0"
+    implementation "com.github.toolarium:toolarium-common:0.8.0"
 
     // logging
-    implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation "org.slf4j:slf4j-api:${commonGradleSlf4jApiVersion}"
+    testRuntimeOnly "ch.qos.logback:logback-classic:${commonGradleLogbackVersion}"
     testImplementation 'org.slf4j:jul-to-slf4j:1.7.33'
-    testRuntimeOnly 'ch.qos.logback:logback-classic:1.2.3'
 }

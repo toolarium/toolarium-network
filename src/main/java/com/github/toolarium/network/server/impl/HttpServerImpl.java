@@ -32,6 +32,10 @@ import org.slf4j.LoggerFactory;
 /**
  * Defines a http server
  * 
+ * <p>NIO: see samples 
+ * http://www.java2s.com/example/java/network/echo-server-via-serversocketchannel.html
+ * http://www.java2s.com/example/java/network/echo-client-via-socketchannel.html
+ * </p>
  * @author patrick
  */
 public class HttpServerImpl implements IHttpServer {
