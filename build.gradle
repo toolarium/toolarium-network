@@ -21,10 +21,11 @@ mainClassName = "com.github.toolarium.network.scanner.PortScannerClient"
  ****************************************************************************************/
 dependencies {
 
-    implementation "com.github.toolarium:toolarium-security:1.1.2"
-
     // common library used for test cases
-    implementation "com.github.toolarium:toolarium-common:0.8.0"
+    implementation "com.github.toolarium:toolarium-common:0.8.2"
+
+    // security library
+    implementation "com.github.toolarium:toolarium-security:1.1.3"
 
     // logging
     implementation "org.slf4j:slf4j-api:${commonGradleSlf4jApiVersion}"
