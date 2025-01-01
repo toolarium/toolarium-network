@@ -3,17 +3,13 @@
  *
  * Copyright by toolarium-network, all rights reserved.
  */
-plugins {
-  id 'com.github.johnrengelman.shadow' version '7.0.0'
-}
-
 apply from: "https://raw.githubusercontent.com/toolarium/common-gradle-build/master/gradle/common.gradle"
 
 
 /***************************************************************************************
  * define the main class name
  ***************************************************************************************/
-mainClassName = "com.github.toolarium.network.scanner.PortScannerClient"
+ext.mainClassName = "com.github.toolarium.network.scanner.PortScannerClient"
 
 
 /****************************************************************************************
@@ -22,10 +18,10 @@ mainClassName = "com.github.toolarium.network.scanner.PortScannerClient"
 dependencies {
 
     // common library used for test cases
-    implementation "com.github.toolarium:toolarium-common:0.8.2"
+    implementation "com.github.toolarium:toolarium-common:0.9.1"
 
     // security library
-    implementation "com.github.toolarium:toolarium-security:1.1.3"
+    implementation "com.github.toolarium:toolarium-security:1.1.4"
 
     // logging
     implementation "org.slf4j:slf4j-api:${commonGradleSlf4jApiVersion}"
