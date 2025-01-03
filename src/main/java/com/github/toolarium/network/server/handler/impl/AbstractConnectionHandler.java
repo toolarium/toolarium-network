@@ -45,7 +45,7 @@ public abstract class AbstractConnectionHandler implements IHttpConnectionHandle
         if (input == null) {
             return input;
         }
-        
+
         final HttpRequestParser requestParser = new HttpRequestParser(input.trim());
         request.setMethod(requestParser.getMethod());
         request.setVersion(requestParser.getVersion());
@@ -85,12 +85,12 @@ public abstract class AbstractConnectionHandler implements IHttpConnectionHandle
 
     
     /**
-     * Get the status line and headers
+     * Get the status line
      *
      * @param response the http response
-     * @return the status line and headers
+     * @return the status line 
      */
-    protected String getStatusLineAndHeaders(IHttpResponse response) {
+    protected String getStatusLine(IHttpResponse response) {
         if (response == null) {
             return null;
         }
@@ -102,6 +102,22 @@ public abstract class AbstractConnectionHandler implements IHttpConnectionHandle
                     .append(HttpStatusUtil.getInstance().getStatusText(response.getStatus()))
                     .append(CRLF);
         
+        return result.toString();
+    }
+
+    
+    /**
+     * Get the headers
+     *
+     * @param response the http response
+     * @return the headers
+     */
+    protected String getHeaders(IHttpResponse response) {
+        if (response == null) {
+            return null;
+        }
+        
+        StringBuilder result = new StringBuilder();
         for (Map.Entry<String, String> header : response.getHeaders().entrySet()) {
             result.append(header.getKey())
                     .append(": ")
@@ -109,7 +125,6 @@ public abstract class AbstractConnectionHandler implements IHttpConnectionHandle
                     .append(CRLF);
         }
 
-        result.append(CRLF);
         return result.toString();
     }
 

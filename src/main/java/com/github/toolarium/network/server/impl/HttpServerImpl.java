@@ -130,7 +130,6 @@ public class HttpServerImpl implements IHttpServer {
             public void run() {
                 while (run) {
                     try {
-                        
                         final Socket socket = serverSocket.accept();
                         
                         if (socket instanceof SSLSocket && LOG.isDebugEnabled()) {
