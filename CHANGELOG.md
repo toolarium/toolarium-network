@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [ 1.0.4 ] - 2025-01-01
+## [ 1.0.4 ] - 2025-01-03
+### Changed
+- http-server refactoring and added enhanced logging.
+- Added HttpServerTestUtil for writing simpler test cases.
+- Enhanced http-server tests.
+
+### Fixed
+- Bugfix in EchoService proper handling of GET requests.
 
 ## [ 1.0.3 ] - 2025-01-01
 ### Changed

@@ -31,7 +31,8 @@
 
   <!-- By default only local project logs in debug -->
   <logger name="com.github" level="INFO"/>
-  <logger name="com.github.toolarium.security" level="DEBUG"/>
+  <logger name="com.github.toolarium.security" level="INFO"/>
+  <logger name="com.github.toolarium.network" level="DEBUG"/>
   
   <root level="WARN"> 
     <!-- <appender-ref ref="CONSOLE" /> -->

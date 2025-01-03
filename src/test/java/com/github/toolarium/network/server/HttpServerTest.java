@@ -5,10 +5,12 @@
  */
 package com.github.toolarium.network.server;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.github.toolarium.network.server.service.EchoService;
 import com.github.toolarium.network.server.service.PingService;
+import com.github.toolarium.network.server.util.HttpServerTestUtil;
 import com.github.toolarium.security.keystore.ISecurityManagerProvider;
 import com.github.toolarium.security.keystore.SecurityManagerProviderFactory;
 import com.github.toolarium.security.ssl.SSLContextFactory;
@@ -25,10 +27,12 @@ import org.slf4j.LoggerFactory;
 
 
 /**
+ * Httop server tests
  * 
  * @author patrick
  */
 public class HttpServerTest {
+    private static final String COLON = ":";
     private static final Logger LOG = LoggerFactory.getLogger(HttpServerTest.class);
 
     
@@ -43,12 +47,14 @@ public class HttpServerTest {
         
         IHttpServer server = HttpServerFactory.getInstance().getServerInstance();
         server.start(new EchoService(), port);
-        Thread.sleep(100L);
+        Thread.sleep(50L);
         
-        LOG.debug("Server hostname: " + server.getHttpServerInformation().getHostname());
+        //String content = "my test";
+        LOG.debug("Server hostname: " + server.getHttpServerInformation().getHostname() + ":" + server.getHttpServerInformation().getPort());
         HttpRequest request = HttpRequest
-                .newBuilder(URI.create("http://localhost" + ":" + port)) //  + server.getHttpServerInformation().getHostname()
+                .newBuilder(URI.create("http://localhost" + COLON + port + "/echo")) //  + server.getHttpServerInformation().getHostname()
                 .GET()
+                //.POST(HttpRequest.BodyPublishers.ofString(content))
                 .build();
         
         HttpResponse<String> response = HttpClient
@@ -58,7 +64,9 @@ public class HttpServerTest {
                 .build()
                 .send(request, BodyHandlers.ofString());
         
-        LOG.debug("Response: " + response.body());
+        LOG.info("Response: " + response.body());
+        assertEquals("echo", response.body());
+        //assertEquals(content, response.body());
         server.stop();
     }
 
@@ -83,10 +91,12 @@ public class HttpServerTest {
         server.start(new EchoService(), port, sslContext);
         Thread.sleep(100L);
         
-        LOG.debug("Server hostname: " + server.getHttpServerInformation().getHostname());
+        String content = "my test";
+        LOG.debug("Server hostname: " + server.getHttpServerInformation().getHostname() + ":" + server.getHttpServerInformation().getPort());
         HttpRequest request = HttpRequest
-                .newBuilder(URI.create("https://localhost" + ":" + port)) //  + server.getHttpServerInformation().getHostname()
-                .GET()
+                .newBuilder(URI.create("https://localhost" + COLON + port)) //  + server.getHttpServerInformation().getHostname()
+                //.GET()
+                .POST(HttpRequest.BodyPublishers.ofString(content))
                 .build();
         
         HttpResponse<String> response = HttpClient
@@ -97,13 +107,14 @@ public class HttpServerTest {
                 .build()
                 .send(request, BodyHandlers.ofString());
         
-        LOG.debug("Response: " + response.body());
+        LOG.info("Response: " + response.body());
+        assertEquals(content, response.body());
         server.stop();
     }
 
-
+    
     /**
-     * Echo test
+     * Ping test
      *
      * @throws Exception In case of an exception
      */
@@ -116,7 +127,7 @@ public class HttpServerTest {
         server.start(new PingService(), port);
         Thread.sleep(100L);
         
-        LOG.debug("Server hostname: " + server.getHttpServerInformation().getHostname());
+        LOG.debug("Server hostname: " + server.getHttpServerInformation().getHostname() + ":" + server.getHttpServerInformation().getPort());
         
         String host = "localhost";
         long result = new PingService.Client().ping(host, port);
@@ -129,7 +140,7 @@ public class HttpServerTest {
                 .build();
 
         HttpRequest request = HttpRequest
-                .newBuilder(URI.create("http://localhost" + ":" + port)) //  + server.getHttpServerInformation().getHostname()
+                .newBuilder(URI.create("http://localhost" + COLON + port)) //  + server.getHttpServerInformation().getHostname()
                 .GET()
                 .build();
         
@@ -139,4 +150,63 @@ public class HttpServerTest {
         LOG.info("Ping " + host + ", reply in " + (t2 - t1) + "ms");
         server.stop();
     }   
+
+    
+    /**
+     * Test Echo server
+     *
+     * @throws Exception In case of an error
+     */
+    @Test
+    public void echoSSLGetTest() throws Exception {
+        int port = 8084;
+        HttpRequest request = HttpRequest
+                .newBuilder(URI.create("https://localhost" + COLON + port + "/echo"))
+                .GET()
+                .build();
+        
+        HttpResponse<String> response = HttpServerTestUtil.getInstance().runHttps(new EchoService(), request);
+        assertEquals(200, response.statusCode());
+        assertEquals("echo", response.body());
+    }
+
+    
+    /**
+     * Test Echo server
+     *
+     * @throws Exception In case of an error
+     */
+    @Test
+    public void echoSSLGetWithBodyTest() throws Exception {
+        int port = 8085;
+        String content = "my test";
+        HttpRequest request = HttpRequest
+                .newBuilder(URI.create("https://localhost" + COLON + port + "/echo"))
+                .method("GET", HttpRequest.BodyPublishers.ofString(content))
+                .build();
+        
+        HttpResponse<String> response = HttpServerTestUtil.getInstance().runHttps(new EchoService(), request);
+        assertEquals(200, response.statusCode());
+        assertEquals("echo", response.body());
+    }
+
+    
+    /**
+     * Test Echo server
+     *
+     * @throws Exception In case of an error
+     */
+    @Test
+    public void echoSSLPostTest() throws Exception {
+        int port = 8086;
+        String content = "{\"action\":\"hello\"}";
+        HttpRequest request = HttpRequest
+                .newBuilder(URI.create("https://localhost" + COLON + port))
+                .POST(HttpRequest.BodyPublishers.ofString(content))
+                .build();
+        
+        HttpResponse<String> response = HttpServerTestUtil.getInstance().runHttps(new EchoService(), request);
+        assertEquals(200, response.statusCode());
+        assertEquals(content, response.body());
+    }
 }
