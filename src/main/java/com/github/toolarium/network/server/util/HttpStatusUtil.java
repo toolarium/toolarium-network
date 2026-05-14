@@ -18,7 +18,7 @@ public final class HttpStatusUtil {
      *
      * @author patrick
      */
-    private static class HOLDER {
+    private static final class HOLDER {
         static final HttpStatusUtil INSTANCE = new HttpStatusUtil();
     }
 

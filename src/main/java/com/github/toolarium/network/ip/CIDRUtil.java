@@ -48,7 +48,7 @@ public final class CIDRUtil {
      *
      * @author patrick
      */
-    private static class HOLDER {
+    private static final class HOLDER {
         static final CIDRUtil INSTANCE = new CIDRUtil();
     }
 

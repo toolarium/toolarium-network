@@ -21,7 +21,7 @@ public final class HttpServerFactory {
      *
      * @author patrick
      */
-    private static class HOLDER {
+    private static final class HOLDER {
         static final HttpServerFactory INSTANCE = new HttpServerFactory();
     }
 

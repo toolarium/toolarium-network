@@ -23,7 +23,32 @@ import java.util.Map;
  * @author patrick
  */
 public abstract class AbstractConnectionHandler implements IHttpConnectionHandler {
+    /**
+     * Default maximum request body size: 10 MB.
+     */
+    static final int DEFAULT_MAX_BODY_SIZE = 10 * 1024 * 1024;
     private static final String CRLF = System.lineSeparator();
+    private int maxBodySize = DEFAULT_MAX_BODY_SIZE;
+
+
+    /**
+     * Set the maximum allowed request body size in bytes.
+     *
+     * @param maxBodySize the max body size in bytes
+     */
+    public void setMaxBodySize(int maxBodySize) {
+        this.maxBodySize = maxBodySize;
+    }
+
+
+    /**
+     * Get the maximum allowed request body size in bytes.
+     *
+     * @return the max body size in bytes
+     */
+    public int getMaxBodySize() {
+        return maxBodySize;
+    }
 
     
     /**
@@ -67,7 +92,11 @@ public abstract class AbstractConnectionHandler implements IHttpConnectionHandle
         if (reader == null || contentLength <= 0) {
             return "";
         }
-        
+
+        if (contentLength > maxBodySize) {
+            throw new IOException("Request body too large: " + contentLength + " exceeds limit of " + maxBodySize + " bytes");
+        }
+
         final char[] bodyInChars = new char[contentLength];
         reader.read(bodyInChars);
         return new String(bodyInChars);

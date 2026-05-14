@@ -22,7 +22,7 @@ public final class NetworkUtil {
      *
      * @author patrick
      */
-    private static class HOLDER {
+    private static final class HOLDER {
         static final NetworkUtil INSTANCE = new NetworkUtil();
     }
 

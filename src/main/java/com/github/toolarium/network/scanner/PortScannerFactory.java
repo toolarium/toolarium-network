@@ -25,7 +25,7 @@ public final class PortScannerFactory {
      *
      * @author patrick
      */
-    private static class HOLDER {
+    private static final class HOLDER {
         static final PortScannerFactory INSTANCE = new PortScannerFactory();
     }
 

@@ -59,7 +59,7 @@ public class HttpServerTest {
         
         HttpResponse<String> response = HttpClient
                 .newBuilder()
-                .version(HttpClient.Version.HTTP_1_1)
+                //.version(HttpClient.Version.HTTP_2)
                 .connectTimeout(Duration.ofSeconds(10))
                 .build()
                 .send(request, BodyHandlers.ofString());

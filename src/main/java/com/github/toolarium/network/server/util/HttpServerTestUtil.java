@@ -44,7 +44,7 @@ public final class HttpServerTestUtil {
      *
      * @author patrick
      */
-    private static class HOLDER {
+    private static final class HOLDER {
         static final HttpServerTestUtil INSTANCE = new HttpServerTestUtil();
     }
 

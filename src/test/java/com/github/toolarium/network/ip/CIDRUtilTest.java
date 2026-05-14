@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.github.toolarium.network.ip.dto.CIDRInfo;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -197,5 +199,38 @@ public class CIDRUtilTest {
 
         //assertEquals(new BigInteger("9223372036854775808"), CIDRUtil.getInstance().getAllAddresses("2001:db8::/65").size());
         assertEquals("[1:2:3:0:0:6::]", "" + CIDRUtil.getInstance().getAllAddresses("1:2:3:0:0:6::"));
+    }
+
+
+    /**
+     * Test CIDRInfo toBinaryString, getAddress, getNetwork, getTargetSize, resolveAddress.
+     *
+     * @throws UnknownHostException In case of invalid host address
+     */
+    @Test
+    public void testCIDRInfoDetails() throws UnknownHostException {
+        CIDRInfo cidr = CIDRUtil.getInstance().parse("192.168.1.0/24");
+
+        // getAddress / getNetwork / getTargetSize
+        assertEquals("192.168.1.0", cidr.getAddress());
+        assertEquals(24, cidr.getNetwork());
+        assertEquals(4, cidr.getTargetSize());
+
+        // toBinaryString for 127.0.0.1
+        InetAddress localhost = InetAddress.getByName("127.0.0.1");
+        String binary = cidr.toBinaryString(localhost);
+        // 127 = 01111111, 0 = 00000000, 0 = 00000000, 1 = 00000001
+        assertEquals("01111111 00000000 00000000 00000001", binary);
+
+        // toBinaryString with byte array
+        String binaryFromBytes = cidr.toBinaryString(localhost.getAddress());
+        assertEquals(binary, binaryFromBytes);
+
+        // resolveAddress
+        InetAddress resolved = cidr.resolveAddress(cidr.getStartIp());
+        assertEquals(cidr.getStartAddress(), resolved);
+
+        // toString
+        assertEquals("192.168.1.0/24", cidr.toString());
     }
 }

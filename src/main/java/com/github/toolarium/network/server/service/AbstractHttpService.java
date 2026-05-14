@@ -11,11 +11,10 @@ import com.github.toolarium.network.server.handler.IHttpConnectionHandler;
 import com.github.toolarium.network.server.handler.impl.HttpConnectionHandlerImpl;
 import com.github.toolarium.network.server.logger.IHttpServerLogger;
 import com.github.toolarium.network.server.util.HttpHeaderUtil;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import java.util.TimeZone;
 
 
 /**
@@ -24,12 +23,9 @@ import java.util.TimeZone;
  * @author patrick
  */
 public abstract class AbstractHttpService implements IHttpService {
-    // DateFormat to be used to format dates: RFC 1123 date string -- "Sun, 06 Nov 1994 08:49:37 GMT"
-    private static final DateFormat RFC_1123_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyyy HH:mm:ss z", Locale.US);
-    
-    static {
-        RFC_1123_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-    }
+    // Thread-safe formatter for RFC 1123 date strings -- "Sun, 06 Nov 1994 08:49:37 GMT"
+    private static final DateTimeFormatter RFC_1123_FORMAT = DateTimeFormatter
+            .ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
 
     
     /**
@@ -67,7 +63,6 @@ public abstract class AbstractHttpService implements IHttpService {
     protected HttpReponse prepareResponse(IHttpRequest request) {
         HttpReponse response = new HttpReponse();
         response.setVersion(request.getVersion());
-        
         final String dateStr = getRFC1123Timestamp();
         response.addHeader(HttpHeaderUtil.DATE, dateStr);
         response.addHeader(HttpHeaderUtil.LAST_MODIFIED, dateStr);
@@ -80,7 +75,7 @@ public abstract class AbstractHttpService implements IHttpService {
      *
      * @return the current time stamp in RFC 1123 format
      */
-    protected String getRFC1123Timestamp() { 
-        return RFC_1123_FORMAT.format(new Date());
+    protected String getRFC1123Timestamp() {
+        return RFC_1123_FORMAT.format(ZonedDateTime.now(ZoneOffset.UTC));
     }
 }

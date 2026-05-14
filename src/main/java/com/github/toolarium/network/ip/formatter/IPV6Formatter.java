@@ -21,7 +21,7 @@ public class IPV6Formatter {
     /**
      * Format IPv6 address.
      * 
-     * </p> 
+     * <p>
      * Short ipv6 addresses:
      * <li>Rule 1: When there are continuous zeros (0s) in the IPv6 address notation, they are replaced with ::. This rule is also known as zero compression.
      * For example, original IPv6 = ef82:0000:0000:0000:0000:1a12:1234:1b12, compressed IPv6 = ef82::1a12:1234:1b12

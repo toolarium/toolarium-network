@@ -18,10 +18,10 @@ ext.mainClassName = "com.github.toolarium.network.scanner.PortScannerClient"
 dependencies {
 
     // common library used for test cases
-    implementation "com.github.toolarium:toolarium-common:0.9.1"
+    implementation "com.github.toolarium:toolarium-common:1.0.0"
 
     // security library
-    implementation "com.github.toolarium:toolarium-security:1.1.4"
+    implementation "com.github.toolarium:toolarium-security:1.1.6"
 
     // logging
     implementation "org.slf4j:slf4j-api:${commonGradleSlf4jApiVersion}"

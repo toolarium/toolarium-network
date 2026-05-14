@@ -95,12 +95,20 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
                 httpAccessLogger.responseSent(httpServerInformation, request, response);
             }
         } catch (IOException e) {
-            Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
-
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("I/O error handling request #" + logId + ": " + e.getMessage(), e);
+            }
         } finally {
             if (writer != null) {
                 try {
                     writer.close();
+                } catch (IOException e) {
+                    // NOP
+                }
+            }
+            if (clientSocket != null) {
+                try {
+                    clientSocket.close();
                 } catch (IOException e) {
                     // NOP
                 }
@@ -131,36 +139,49 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
             LOG.debug(StringUtil.getInstance().width(logHeader + "request", 34, ' ', false) + logOutputWrapper(firstLine)); 
         }
 
-        if (reader.ready()) {
-            request.setHeaders(HttpHeaderUtil.getInstance().readHeaders(reader));
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(StringUtil.getInstance().width(logHeader + "request headers", 34, ' ', false) + logOutputWrapper("" + request.getHeaders())); 
+        // Always read headers — they are mandatory in HTTP. readHeaders() uses
+        // blocking readLine() internally, so it waits for data correctly.
+        request.setHeaders(HttpHeaderUtil.getInstance().readHeaders(reader));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(StringUtil.getInstance().width(logHeader + "request headers", 34, ' ', false) + logOutputWrapper("" + request.getHeaders()));
+        }
+
+        if (request.containsHeader(HttpHeaderUtil.CONTENT_LENGTH)) {
+            int length;
+            try {
+                length = Integer.parseInt(request.getHeader(HttpHeaderUtil.CONTENT_LENGTH).trim());
+            } catch (NumberFormatException e) {
+                throw new IOException("Invalid Content-Length header: " + request.getHeader(HttpHeaderUtil.CONTENT_LENGTH));
             }
-        
-            if (request.containsHeader(HttpHeaderUtil.CONTENT_LENGTH)) {
-                int length = Integer.parseInt(request.getHeader(HttpHeaderUtil.CONTENT_LENGTH));
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug(StringUtil.getInstance().width(logHeader + "read length", 34, ' ', false) + logOutputWrapper("" + length)); 
-                }
-                String body = readInBody(reader, length);
-                request.setBody(body);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug(StringUtil.getInstance().width(logHeader + "request body", 34, ' ', false) + logOutputWrapper(body)); 
-                }
-            } else {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug(StringUtil.getInstance().width(logHeader + "no length", 34, ' ', false)); 
-                }
-                
-                if (reader.ready()) {
-                    StringBuilder content = new StringBuilder();
-                    String m;
-                    while ((m = reader.readLine()) != null) {
-                        content.append(m);
+
+            if (length < 0) {
+                throw new IOException("Negative Content-Length: " + length);
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(StringUtil.getInstance().width(logHeader + "read length", 34, ' ', false) + logOutputWrapper("" + length));
+            }
+            String body = readInBody(reader, length);
+            request.setBody(body);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(StringUtil.getInstance().width(logHeader + "request body", 34, ' ', false) + logOutputWrapper(body));
+            }
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(StringUtil.getInstance().width(logHeader + "no length", 34, ' ', false));
+            }
+
+            // Without Content-Length, only read if data is already buffered.
+            if (reader.ready()) {
+                StringBuilder content = new StringBuilder();
+                String m;
+                while ((m = reader.readLine()) != null) {
+                    content.append(m);
+                    if (content.length() > getMaxBodySize()) {
+                        throw new IOException("Request body too large: exceeds limit of " + getMaxBodySize() + " bytes");
                     }
-                    
-                    request.setBody(content.toString());
                 }
+
+                request.setBody(content.toString());
             }
         }
         

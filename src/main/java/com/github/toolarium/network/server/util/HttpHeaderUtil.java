@@ -58,7 +58,7 @@ public final class HttpHeaderUtil {
      *
      * @author patrick
      */
-    private static class HOLDER {
+    private static final class HOLDER {
         static final HttpHeaderUtil INSTANCE = new HttpHeaderUtil();
     }
 
