@@ -61,9 +61,10 @@ public class SslCertificateInspectorImpl implements ISslCertificateInspector {
         SSLSocket socket = null;
         try {
             SSLSocketFactory factory = createTrustAllFactory();
-            socket = (SSLSocket) factory.createSocket();
-            socket.setSoTimeout(timeout);
-            socket.connect(new java.net.InetSocketAddress(h, port), timeout);
+            java.net.Socket plain = new java.net.Socket();
+            plain.setSoTimeout(timeout);
+            plain.connect(new java.net.InetSocketAddress(h, port), timeout);
+            socket = (SSLSocket) factory.createSocket(plain, h, port, true);
             socket.startHandshake();
 
             SSLSession session = socket.getSession();

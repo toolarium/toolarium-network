@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [ 1.1.1 ] - 2026-05-14
+## [ 1.1.1 ] - 2026-08-02
+### Fixed
+- Fixed TLS hostname verification in `SslCertificateInspectorImpl`: replaced no-arg `SSLSocketFactory.createSocket()` with a plain socket connected first, then wrapped via `createSocket(plain, host, port, true)`. The no-arg overload produced an SSL socket with no peer hostname, so the JDK had no name to bind; the 4-arg overload preserves the hostname for correct peer identification if endpoint verification is ever enabled.
 
 ## [ 1.1.0 ] - 2026-05-14
 ### Added
