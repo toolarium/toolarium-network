@@ -12,11 +12,10 @@ import java.util.Map;
 
 /**
  * Http headers
- * 
+ *
  * @author patrick
  */
 public final class HttpHeaderUtil {
-    
     /** ALLOW */
     public static final String ALLOW = "Allow";
     
@@ -49,6 +48,12 @@ public final class HttpHeaderUtil {
     
     /** LAST_MODIFIED */
     public static final String LAST_MODIFIED = "Last-Modified";
+
+    /** Maximum number of headers accepted per request. */
+    static final int MAX_HEADER_COUNT = 100;
+
+    /** Maximum total header bytes accepted per request (8 KB). */
+    static final int MAX_HEADER_BYTES = 8 * 1024;
 
     
 
@@ -94,17 +99,25 @@ public final class HttpHeaderUtil {
         }
 
         final Map<String, String> headers = new LinkedHashMap<>();
+        int totalBytes = 0;
         String currentLine = br.readLine();
         while (currentLine != null && !currentLine.trim().isEmpty()) {
+            totalBytes += currentLine.length();
+            if (totalBytes > MAX_HEADER_BYTES) {
+                throw new IOException("Request headers too large: exceeded limit of " + MAX_HEADER_BYTES + " bytes");
+            }
+            if (headers.size() >= MAX_HEADER_COUNT) {
+                throw new IOException("Too many request headers: exceeded limit of " + MAX_HEADER_COUNT);
+            }
             currentLine = currentLine.trim();
             int idx = currentLine.indexOf(":");
             if (idx > 0) {
                 headers.put(currentLine.substring(0, idx).trim(), currentLine.substring(idx + 1).trim());
             }
-            
+
             currentLine = br.readLine();
         }
-        
+
         return headers;
     }
 }

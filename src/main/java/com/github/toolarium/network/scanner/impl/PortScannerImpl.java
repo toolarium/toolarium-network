@@ -22,7 +22,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
  * @author patrick
  */
 public class PortScannerImpl implements IPortScanner {
-    private static final Logger LOG = Logger.getLogger(PortScannerImpl.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(PortScannerImpl.class);
     private int numberOfThreads;
     private int timeout;
 
@@ -68,8 +69,10 @@ public class PortScannerImpl implements IPortScanner {
 
         final List<IPortScanResult> result = new ArrayList<IPortScanResult>();
         if (hostList == null || hostList.isEmpty()) {
-            LOG.fine("Could not resolve address: " + scanAddress);
-            LOG.info("No ports to scan on [" + scanAddress + "].");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not resolve address: {}", scanAddress);
+            }
+            LOG.info("No ports to scan on [{}].", scanAddress);
             return result;
         }
 
@@ -78,7 +81,7 @@ public class PortScannerImpl implements IPortScanner {
         final ExecutorService es = Executors.newFixedThreadPool(numberOfThreads);
         final List<Future<IPortScanResult>> futures = new ArrayList<Future<IPortScanResult>>();
         for (String hostAddress : hostList) {
-            LOG.info("Scan ports on [" + hostAddress + "] from range " + startPort + " - " + endPort + " (threads: " + numberOfThreads + ", timeout:" + timeout + ")...");
+            LOG.info("Scan ports on [{}] from range {} - {} (threads: {}, timeout: {})...", hostAddress, startPort, endPort, numberOfThreads, timeout);
             for (int port = startPort; port <= endPort; port++) {
                 futures.add(prepareNetworkAddressScanThread(es, hostAddress, port, timeout, portScanListenerList));
             }
@@ -88,12 +91,16 @@ public class PortScannerImpl implements IPortScanner {
 
         es.shutdown();
 
-        LOG.fine("Wait until ended...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Wait until ended...");
+        }
         for (final Future<IPortScanResult> f : futures) {
             prepareResultSet(filterIsAvailable, result, f);
         }
 
-        LOG.fine("Ended.");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Ended.");
+        }
         return result;
     }
 
@@ -156,7 +163,9 @@ public class PortScannerImpl implements IPortScanner {
                 }
             }
         } catch (Exception e) {
-            // LOG.debug("Could not Error occurred: " + e.getMessage(), e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not retrieve scan result: {}", e.getMessage(), e);
+            }
         }
     }
 

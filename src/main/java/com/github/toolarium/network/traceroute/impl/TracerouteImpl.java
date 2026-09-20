@@ -22,8 +22,14 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Implements traceroute using TCP connections with incrementing TTL.
- * Uses {@link Socket#connect} with the SO_LINGER option to probe each hop.
+ * Implements a TCP reachability probe that attempts successive connections to the target.
+ *
+ * <p><b>Limitation:</b> True TTL-based hop discovery (as in ICMP traceroute) is not possible
+ * in pure Java without raw sockets and elevated OS privileges. {@link java.net.InetAddress#isReachable}
+ * with a TTL value requires ICMP (root/admin); without it the JVM silently falls back to TCP
+ * port 7 (echo), which bears no relation to TTL-based routing. This implementation therefore
+ * performs repeated TCP connect probes to the target port and reports reachability per attempt
+ * rather than intermediate router hops.</p>
  *
  * @author patrick
  */
@@ -104,6 +110,12 @@ public class TracerouteImpl implements ITraceroute {
     /**
      * Probe a single hop using a TCP socket with a specific TTL.
      *
+     * <p><b>JVM limitation:</b> {@link InetAddress#isReachable(java.net.NetworkInterface, int, int)}
+     * requires ICMP (root/admin privileges). Without them the JVM silently falls back to
+     * TCP port 7 (echo), which is unrelated to TTL-based routing. As a result, intermediate
+     * router hops cannot be discovered in pure Java without raw sockets. The TCP connect
+     * fallback below still reports whether the final target is reachable.</p>
+     *
      * @param host the target host
      * @param targetAddress the target IP address
      * @param port the port
@@ -120,6 +132,8 @@ public class TracerouteImpl implements ITraceroute {
             // We use InetAddress.isReachable with TTL for the probe instead.
             InetAddress target = InetAddress.getByName(host);
             long start = System.currentTimeMillis();
+            // NOTE: isReachable with TTL requires ICMP/root; without it the JVM falls back to
+            // TCP port 7 (echo) — intermediate hop discovery will not work on most systems.
             boolean reachable = target.isReachable(null, ttl, timeout);
             long rtt = System.currentTimeMillis() - start;
 

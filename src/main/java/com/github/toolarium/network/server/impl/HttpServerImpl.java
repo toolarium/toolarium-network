@@ -207,6 +207,18 @@ public class HttpServerImpl implements IHttpServer {
             run = false;
             mainExecutor.shutdown();
             executor.shutdown();
+            try {
+                if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+                if (!mainExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    mainExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                mainExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
             
             try {
                 serverSocket.close();

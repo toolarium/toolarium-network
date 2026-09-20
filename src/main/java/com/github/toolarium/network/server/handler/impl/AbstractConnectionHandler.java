@@ -98,8 +98,15 @@ public abstract class AbstractConnectionHandler implements IHttpConnectionHandle
         }
 
         final char[] bodyInChars = new char[contentLength];
-        reader.read(bodyInChars);
-        return new String(bodyInChars);
+        int totalRead = 0;
+        while (totalRead < contentLength) {
+            int read = reader.read(bodyInChars, totalRead, contentLength - totalRead);
+            if (read == -1) {
+                break;
+            }
+            totalRead += read;
+        }
+        return new String(bodyInChars, 0, totalRead);
     }
 
     
@@ -148,9 +155,13 @@ public abstract class AbstractConnectionHandler implements IHttpConnectionHandle
         
         StringBuilder result = new StringBuilder();
         for (Map.Entry<String, String> header : response.getHeaders().entrySet()) {
+            String value = "";
+            if (header.getValue() != null) {
+                value = header.getValue().replace("\r", "").replace("\n", "");
+            }
             result.append(header.getKey())
                     .append(": ")
-                    .append(header.getValue())
+                    .append(value)
                     .append(CRLF);
         }
 

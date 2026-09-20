@@ -17,7 +17,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +32,9 @@ import org.slf4j.LoggerFactory;
  */
 public class NsLookupImpl implements INsLookup {
     private static final Logger LOG = LoggerFactory.getLogger(NsLookupImpl.class);
+    private static final int MAX_THREADS = 20;
     private final int timeout;
+    private final ExecutorService executor;
 
 
     /**
@@ -40,6 +44,16 @@ public class NsLookupImpl implements INsLookup {
      */
     public NsLookupImpl(int timeout) {
         this.timeout = timeout;
+        this.executor = Executors.newFixedThreadPool(MAX_THREADS, new ThreadFactory() {
+            private final AtomicInteger count = new AtomicInteger();
+
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t = new Thread(r, "nslookup-" + count.incrementAndGet());
+                t.setDaemon(true);
+                return t;
+            }
+        });
     }
 
 
@@ -102,7 +116,8 @@ public class NsLookupImpl implements INsLookup {
         final long start = System.currentTimeMillis();
 
         try {
-            InetAddress addr = InetAddress.getByName(ip);
+            InetAddress[] addresses = resolveWithTimeout(ip);
+            InetAddress addr = addresses[0];
             String hostname = addr.getCanonicalHostName();
             long duration = System.currentTimeMillis() - start;
 
@@ -115,7 +130,7 @@ public class NsLookupImpl implements INsLookup {
             }
             return result;
 
-        } catch (UnknownHostException e) {
+        } catch (Exception e) {
             long duration = System.currentTimeMillis() - start;
             NsLookupResult result = new NsLookupResult(ip, null, Collections.emptyList(), false, duration, e);
             LOG.debug("Reverse lookup failed for " + ip + ": " + e.getMessage());
@@ -145,7 +160,6 @@ public class NsLookupImpl implements INsLookup {
             return Collections.emptyList();
         }
 
-        ExecutorService executor = Executors.newFixedThreadPool(Math.min(queries.length, 20));
         List<Future<INsLookupResult>> futures = new ArrayList<>();
 
         for (final String query : queries) {
@@ -159,8 +173,6 @@ public class NsLookupImpl implements INsLookup {
                 }
             }));
         }
-
-        executor.shutdown();
 
         List<INsLookupResult> results = new ArrayList<>();
         for (Future<INsLookupResult> future : futures) {
@@ -184,17 +196,12 @@ public class NsLookupImpl implements INsLookup {
      * @throws Exception In case of an error
      */
     private InetAddress[] resolveWithTimeout(final String host) throws Exception {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
-            Future<InetAddress[]> future = executor.submit(new Callable<InetAddress[]>() {
-                @Override
-                public InetAddress[] call() throws UnknownHostException {
-                    return InetAddress.getAllByName(host);
-                }
-            });
-            return future.get(timeout, TimeUnit.MILLISECONDS);
-        } finally {
-            executor.shutdown();
-        }
+        Future<InetAddress[]> future = executor.submit(new Callable<InetAddress[]>() {
+            @Override
+            public InetAddress[] call() throws UnknownHostException {
+                return InetAddress.getAllByName(host);
+            }
+        });
+        return future.get(timeout, TimeUnit.MILLISECONDS);
     }
 }

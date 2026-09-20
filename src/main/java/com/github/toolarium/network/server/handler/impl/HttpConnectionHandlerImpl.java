@@ -136,7 +136,11 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
         String firstLine = readInFirstLine(reader, request);
         
         if (LOG.isDebugEnabled()) {
-            LOG.debug(StringUtil.getInstance().width(logHeader + "request", 34, ' ', false) + logOutputWrapper(firstLine)); 
+            String sanitizedFirstLine = "";
+            if (firstLine != null) {
+                sanitizedFirstLine = firstLine.replace("\r", "").replace("\n", "");
+            }
+            LOG.debug(StringUtil.getInstance().width(logHeader + "request", 34, ' ', false) + logOutputWrapper(sanitizedFirstLine));
         }
 
         // Always read headers — they are mandatory in HTTP. readHeaders() uses

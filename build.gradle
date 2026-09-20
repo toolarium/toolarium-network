@@ -7,6 +7,14 @@ apply from: "https://raw.githubusercontent.com/toolarium/common-gradle-build/mas
 
 
 /***************************************************************************************
+ * Suppress obsolete source/target warnings when compiling with a newer JDK
+ ***************************************************************************************/
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xlint:-options'
+}
+
+
+/***************************************************************************************
  * define the main class name
  ***************************************************************************************/
 ext.mainClassName = "com.github.toolarium.network.scanner.PortScannerClient"
@@ -18,7 +26,7 @@ ext.mainClassName = "com.github.toolarium.network.scanner.PortScannerClient"
 dependencies {
 
     // common library used for test cases
-    implementation "com.github.toolarium:toolarium-common:1.0.0"
+    implementation "com.github.toolarium:toolarium-common:1.1.0"
 
     // security library
     implementation "com.github.toolarium:toolarium-security:1.1.6"

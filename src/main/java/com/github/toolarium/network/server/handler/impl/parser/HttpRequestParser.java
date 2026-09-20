@@ -30,12 +30,12 @@ public class HttpRequestParser {
         decoderPairs.put("%26", "&");
         decoderPairs.put("%40", "@");
         decoderPairs.put("%23", "#");
-        decoderPairs.put("%24", "\\$");
+        decoderPairs.put("%24", "$");
         decoderPairs.put("%5B", "[");
         decoderPairs.put("%5D", "]");
         decoderPairs.put("%3A", ":");
         decoderPairs.put("%22", "\"");
-        decoderPairs.put("%3F", "\\?");
+        decoderPairs.put("%3F", "?");
     }
     
     private String[] request;
@@ -115,7 +115,7 @@ public class HttpRequestParser {
                     if (paramValuePair.length > 1) {
                         value = paramValuePair[1];
                         for (Map.Entry<String, String> entry : decoderPairs.entrySet()) {
-                            value = value.replaceAll(entry.getKey(), entry.getValue());
+                            value = value.replace(entry.getKey(), entry.getValue());
                         }
                     }
                     

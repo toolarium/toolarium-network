@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 public class HttpClientUtilImpl implements IHttpClientUtil {
     private static final Logger LOG = LoggerFactory.getLogger(HttpClientUtilImpl.class);
     private final int timeout;
+    private final HttpClient httpClient;
 
 
     /**
@@ -35,6 +36,9 @@ public class HttpClientUtilImpl implements IHttpClientUtil {
      */
     public HttpClientUtilImpl(int timeout) {
         this.timeout = timeout;
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(timeout))
+                .build();
     }
 
 
@@ -110,11 +114,7 @@ public class HttpClientUtilImpl implements IHttpClientUtil {
                 }
             }
 
-            HttpClient client = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofMillis(timeout))
-                    .build();
-
-            HttpResponse<String> response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
             long duration = System.currentTimeMillis() - start;
 
             HttpClientResult result = new HttpClientResult(url, method, response.statusCode(),

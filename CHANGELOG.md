@@ -5,7 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [ 1.1.2 ] - 2026-08-02
+## [ 1.1.2 ] - 2026-09-20
+### Security
+- Fixed HTTP response header CRLF injection: strip `\r` and `\n` from all response header values before writing (`AbstractConnectionHandler`).
+- Fixed WHOIS SSRF via referral chain: referral targets are now validated against an allowlist of 8 known WHOIS registry suffixes; non-matching referrals are logged and skipped (`WhoisImpl`).
+- Fixed JNDI URL injection in `DigImpl`: `dnsServer` parameter is now rejected if it contains `://`, `/`, or spaces before being placed into `java.naming.provider.url`.
+- Fixed unbounded WHOIS response accumulation: responses are now capped at 512 KB; exceeding servers receive an `IOException` (`WhoisImpl`).
+- Fixed log injection: raw HTTP request first line is now sanitized (CR/LF stripped) before being written to the DEBUG log (`HttpConnectionHandlerImpl`).
+
+### Changed
+- Fixed `HttpClient` created per request in `HttpClientUtilImpl`: `HttpClient` is now a shared field initialized once in the constructor, enabling connection pool reuse.
+- Fixed per-call thread pool creation in `NsLookupImpl`: both single lookups (`resolveWithTimeout`) and batch lookups (`executeBatch`) now share a single class-level daemon thread pool of 20 threads instead of spawning a new executor on every call.
+- Fixed `DigImpl.digAll`: all 6 record type queries now share a single JNDI `DirContext` instead of creating and tearing down a DNS context per query.
+- Fixed URL-decode hot loop in `HttpRequestParser`: replaced `String.replaceAll()` (regex) with `String.replace()` (literal) for all percent-encoding pairs; corrected `%24` (`$`) and `%3F` (`?`) values that were incorrectly regex-escaped.
+- Documented JVM limitation in `TracerouteImpl`: `InetAddress.isReachable(ttl)` silently falls back to TCP port 7 without ICMP/root privileges, making intermediate hop discovery non-functional on most systems.
+- Fixed partial read bug in `AbstractConnectionHandler.readInBody`: `reader.read(char[])` return value is now checked in a loop to handle network fragmentation; body is no longer silently truncated.
+- Fixed HTTP header flood DoS: `HttpHeaderUtil.readHeaders` now enforces a limit of 100 headers and 8 KB total header bytes, throwing `IOException` when exceeded.
+- Fixed `NsLookupImpl.reverseLookup` having no timeout: now routes through `resolveWithTimeout` (same executor + `future.get(timeout)` as forward lookup).
+- Fixed unclean server shutdown: `HttpServerImpl.stop()` now calls `awaitTermination(30s)` on the worker pool and `awaitTermination(5s)` on the accept loop before returning; falls back to `shutdownNow()` on timeout or `InterruptedException`.
+- Fixed silent exception swallow in `PortScannerImpl.prepareResultSet`: caught exceptions are now logged at DEBUG level with stack trace.
+- Fixed implicit referral depth limit in `WhoisImpl`: introduced explicit `MAX_REFERRALS = 1` constant with a guarded `while` loop and counter.
+- Migrated `PortScannerImpl` from `java.util.logging` to SLF4J; all `LOG.debug` calls are now guarded by `isDebugEnabled()`.
+- Updated dependency `toolarium-common` from `1.0.0` to `1.1.0`.
 
 ## [ 1.1.1 ] - 2026-08-02
 ### Fixed

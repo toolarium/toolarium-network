@@ -83,29 +83,12 @@ public class DigImpl implements IDig {
         try {
             DirContext ctx = createDirContext();
             try {
-                Attributes attrs = ctx.getAttributes(host, new String[]{recordType.name()});
-                List<IDnsRecord> records = parseRecords(attrs, recordType);
-                long duration = System.currentTimeMillis() - start;
-
-                DigResult result = new DigResult(host, recordType, records, true, duration, null);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Dig: " + result);
-                }
-                return result;
+                return digWithContext(host, recordType, ctx, start);
             } finally {
                 ctx.close();
             }
         } catch (NamingException e) {
             long duration = System.currentTimeMillis() - start;
-            // No records found is not an error — return success with empty records
-            if (isNoRecordsException(e)) {
-                DigResult result = new DigResult(host, recordType, Collections.emptyList(), true, duration, null);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Dig (no records): " + result);
-                }
-                return result;
-            }
-
             DigResult result = new DigResult(host, recordType, Collections.emptyList(), false, duration, e);
             LOG.debug("Dig failed for " + host + " " + recordType + ": " + e.getMessage());
             return result;
@@ -135,7 +118,63 @@ public class DigImpl implements IDig {
      */
     @Override
     public List<IDigResult> digAll(String hostname) {
-        return dig(hostname, ALL_COMMON_TYPES);
+        if (hostname == null || hostname.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        final String host = hostname.trim();
+        List<IDigResult> results = new ArrayList<>();
+
+        try {
+            DirContext ctx = createDirContext();
+            try {
+                for (DnsRecordType type : ALL_COMMON_TYPES) {
+                    results.add(digWithContext(host, type, ctx, System.currentTimeMillis()));
+                }
+            } finally {
+                ctx.close();
+            }
+        } catch (NamingException e) {
+            LOG.debug("Dig failed to create context for " + host + ": " + e.getMessage());
+        }
+
+        return results;
+    }
+
+
+    /**
+     * Execute a single DNS query using an existing context.
+     *
+     * @param host the hostname
+     * @param recordType the record type
+     * @param ctx the JNDI context
+     * @param start the start timestamp
+     * @return the dig result
+     */
+    private IDigResult digWithContext(String host, DnsRecordType recordType, DirContext ctx, long start) {
+        try {
+            Attributes attrs = ctx.getAttributes(host, new String[]{recordType.name()});
+            List<IDnsRecord> records = parseRecords(attrs, recordType);
+            long duration = System.currentTimeMillis() - start;
+
+            DigResult result = new DigResult(host, recordType, records, true, duration, null);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Dig: " + result);
+            }
+            return result;
+        } catch (NamingException e) {
+            long duration = System.currentTimeMillis() - start;
+            if (isNoRecordsException(e)) {
+                DigResult result = new DigResult(host, recordType, Collections.emptyList(), true, duration, null);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Dig (no records): " + result);
+                }
+                return result;
+            }
+            DigResult result = new DigResult(host, recordType, Collections.emptyList(), false, duration, e);
+            LOG.debug("Dig failed for " + host + " " + recordType + ": " + e.getMessage());
+            return result;
+        }
     }
 
 
@@ -152,7 +191,11 @@ public class DigImpl implements IDig {
         env.put("com.sun.jndi.dns.timeout.retries", "1");
 
         if (dnsServer != null && !dnsServer.trim().isEmpty()) {
-            env.put("java.naming.provider.url", "dns://" + dnsServer.trim());
+            String trimmed = dnsServer.trim();
+            if (trimmed.contains("://") || trimmed.contains("/") || trimmed.contains(" ")) {
+                throw new NamingException("Invalid DNS server address: " + trimmed);
+            }
+            env.put("java.naming.provider.url", "dns://" + trimmed);
         }
 
         return new InitialDirContext(env);

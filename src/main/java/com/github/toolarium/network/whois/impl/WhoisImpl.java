@@ -14,9 +14,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +33,11 @@ public class WhoisImpl implements IWhois {
     private static final Logger LOG = LoggerFactory.getLogger(WhoisImpl.class);
     private static final int WHOIS_PORT = 43;
     private static final String DEFAULT_WHOIS_SERVER = "whois.iana.org";
+    private static final int MAX_RESPONSE_BYTES = 512 * 1024;
+    private static final int MAX_REFERRALS = 1;
+    private static final Set<String> ALLOWED_WHOIS_SUFFIXES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            ".iana.org", ".arin.net", ".ripe.net", ".apnic.net",
+            ".lacnic.net", ".afrinic.net", ".verisign-grs.com", ".pir.org")));
     private final int timeout;
 
 
@@ -77,16 +85,20 @@ public class WhoisImpl implements IWhois {
 
             Map<String, String> fields = parseFields(rawResponse);
 
-            // Check for referral to another WHOIS server
+            // Check for referral to another WHOIS server (max MAX_REFERRALS levels)
             String referral = findReferral(fields);
-            if (referral != null && !referral.equalsIgnoreCase(server)) {
+            int referralCount = 0;
+            while (referral != null && !referral.equalsIgnoreCase(server)
+                    && isAllowedReferral(referral) && referralCount < MAX_REFERRALS) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Following WHOIS referral from " + server + " to " + referral);
+                    LOG.debug("Following WHOIS referral from {} to {}", server, referral);
                 }
                 rawResponse = executeWhoisQuery(q, referral);
                 duration = System.currentTimeMillis() - start;
                 fields = parseFields(rawResponse);
                 server = referral;
+                referral = findReferral(fields);
+                referralCount++;
             }
 
             WhoisResult result = new WhoisResult(q, server, rawResponse, fields, true, duration, null);
@@ -126,6 +138,9 @@ public class WhoisImpl implements IWhois {
             String line;
             while ((line = reader.readLine()) != null) {
                 response.append(line).append("\n");
+                if (response.length() > MAX_RESPONSE_BYTES) {
+                    throw new IOException("WHOIS response too large: exceeded limit of " + MAX_RESPONSE_BYTES + " bytes");
+                }
             }
 
             return response.toString();
@@ -170,6 +185,24 @@ public class WhoisImpl implements IWhois {
             }
         }
         return fields;
+    }
+
+
+    /**
+     * Check whether a referral hostname is in the known WHOIS registry allowlist.
+     *
+     * @param referral the referral hostname
+     * @return true if allowed
+     */
+    private boolean isAllowedReferral(String referral) {
+        String lower = referral.toLowerCase();
+        for (String suffix : ALLOWED_WHOIS_SUFFIXES) {
+            if (lower.endsWith(suffix)) {
+                return true;
+            }
+        }
+        LOG.warn("Ignoring WHOIS referral to non-allowlisted server: " + referral);
+        return false;
     }
 
 
