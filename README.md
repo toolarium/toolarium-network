@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/github/license/toolarium/toolarium-network)](https://github.com/toolarium/toolarium-network/blob/master/LICENSE)
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.toolarium/toolarium-network/1.1.1)](https://search.maven.org/artifact/com.github.toolarium/toolarium-network/1.1.1/jar)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.toolarium/toolarium-network/1.1.3)](https://search.maven.org/artifact/com.github.toolarium/toolarium-network/1.1.3/jar)
 [![javadoc](https://javadoc.io/badge2/com.github.toolarium/toolarium-network/javadoc.svg)](https://javadoc.io/doc/com.github.toolarium/toolarium-network)
 
 # toolarium-network
@@ -33,7 +33,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ```groovy
 dependencies {
-    implementation "com.github.toolarium:toolarium-network:1.1.1"
+    implementation "com.github.toolarium:toolarium-network:1.1.3"
 }
 ```
 
@@ -43,10 +43,27 @@ dependencies {
 <dependency>
     <groupId>com.github.toolarium</groupId>
     <artifactId>toolarium-network</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.3</version>
 </dependency>
 ```
 
+
+### IP Utilities Usage
+
+```java
+// Address validation
+boolean valid  = IPUtil.getInstance().isValidAddress("192.168.1.1");
+boolean isIPv4 = IPUtil.getInstance().isIPv4Address("192.168.1.1");
+boolean isIPv6 = IPUtil.getInstance().isIPv6Address("::1");
+InetAddress addr = IPUtil.getInstance().parse("192.168.1.1");
+
+// CIDR range checks
+boolean inRange  = CIDRUtil.getInstance().isInRange("192.168.1.0/24", "192.168.1.50");
+boolean validRange = CIDRUtil.getInstance().isValidAddressRange("10.0.0.0/8");
+boolean isIPv4Range = CIDRUtil.getInstance().isIPv4Range("192.168.0.0/16");
+List<String> all = CIDRUtil.getInstance().getAllAddresses("192.168.1.0/30");
+CIDRInfo cidrInfo = CIDRUtil.getInstance().parse("10.0.0.0/8");
+```
 
 ### HTTP Server Configuration
 
@@ -137,8 +154,11 @@ IWhoisResult result = WhoisFactory.getInstance().query("example.com");
 
 ```java
 IWakeOnLanResult result = WakeOnLanFactory.getInstance().wake("AA:BB:CC:DD:EE:FF");
-// Sends magic packet via UDP broadcast
-// Custom broadcast: wake("AA:BB:CC:DD:EE:FF", "192.168.1.255")
+// result.isSuccess(), result.getException()
+// result.getMacAddress(), result.getBroadcastAddress(), result.getPort()
+
+// Custom broadcast address
+IWakeOnLanResult result2 = WakeOnLanFactory.getInstance().wake("AA:BB:CC:DD:EE:FF", "192.168.1.255");
 ```
 
 ### Network Interface Info Usage
@@ -152,21 +172,41 @@ INetworkInterfaceInfo loopback = NetworkInterfaceUtil.getInstance().getLoopbackI
 ### SSL Certificate Inspector Usage
 
 ```java
+// Inspect on default port 443
 ISslCertificateInfo cert = SslCertificateInspectorFactory.getInstance().inspect("github.com");
-// cert.getSubjectDN(), cert.getIssuerDN(), cert.getNotAfter()
-// cert.isValid(), cert.getDaysUntilExpiry(), cert.getProtocol()
+// cert.getHost(), cert.getPort()
+// cert.getSubjectDN(), cert.getIssuerDN(), cert.getSerialNumber()
+// cert.getNotBefore(), cert.getNotAfter()
+// cert.getSubjectAlternativeNames()
+// cert.getProtocol(), cert.getCipherSuite(), cert.getChainLength()
+// cert.isValid(), cert.getDaysUntilExpiry()
+// cert.isSuccess(), cert.getDuration(), cert.getException()
+
+// Custom port
+ISslCertificateInfo cert2 = SslCertificateInspectorFactory.getInstance().inspect("internal.host", 8443);
+
+// Multi-host parallel inspection
+List<ISslCertificateInfo> certs = SslCertificateInspectorFactory.getInstance().getInspector().inspect(443, "github.com", "google.com");
+
+// Custom timeout (5 seconds)
+ISslCertificateInspector inspector = SslCertificateInspectorFactory.getInstance().getInspector(5000);
+ISslCertificateInfo cert3 = inspector.inspect("example.com");
 ```
 
 ### Subnet Calculator Usage
 
 ```java
 ISubnetInfo info = SubnetCalculator.getInstance().calculate("192.168.1.0/24");
-// info.getNetworkAddress() -> "192.168.1.0"
-// info.getBroadcastAddress() -> "192.168.1.255"
-// info.getFirstUsableAddress() -> "192.168.1.1"
+// info.getCidr()              -> "192.168.1.0/24"
+// info.getNetworkAddress()    -> "192.168.1.0"
+// info.getBroadcastAddress()  -> "192.168.1.255"
+// info.getFirstUsableAddress()-> "192.168.1.1"
 // info.getLastUsableAddress() -> "192.168.1.254"
-// info.getSubnetMask() -> "255.255.255.0"
-// info.getUsableHostCount() -> 254
+// info.getSubnetMask()        -> "255.255.255.0"
+// info.getPrefixLength()      -> 24
+// info.getTotalAddresses()    -> 256
+// info.getUsableHostCount()   -> 254
+// info.isIPv6()               -> false
 ```
 
 ### HTTP Client Usage
@@ -188,7 +228,8 @@ client.delete("http://example.com/api/1");
 ### Proxy Detection Usage
 
 ```java
-List<IProxyInfo> proxies = ProxyDetector.getInstance().detectHttpProxies();
+List<IProxyInfo> httpProxies  = ProxyDetector.getInstance().detectHttpProxies();
+List<IProxyInfo> httpsProxies = ProxyDetector.getInstance().detectHttpsProxies();
 boolean hasProxy = ProxyDetector.getInstance().hasProxy("http://example.com");
 List<IProxyInfo> custom = ProxyDetector.getInstance().detectProxies("https://internal.company.com");
 ```
@@ -196,9 +237,26 @@ List<IProxyInfo> custom = ProxyDetector.getInstance().detectProxies("https://int
 ### Port Scanner Usage
 
 ```java
-// Scan open ports on localhost, range 1-1024, with 20 threads and 200ms timeout
+// Convenience: scan open ports, returns Map<host, List<port>>
 Map<String, List<Integer>> openPorts =
     PortScannerFactory.getInstance().scanOpenPorts("127.0.0.1", 1, 1024, 20, 200);
+
+// Convenience: scan closed ports
+Map<String, List<Integer>> closedPorts =
+    PortScannerFactory.getInstance().scanClosedPorts("127.0.0.1", 1, 1024, 20, 200);
+
+// Full API: IPortScanner returns rich IPortScanResult per port
+IPortScanner scanner = PortScannerFactory.getInstance().getPortScanner(20, 200);
+List<IPortScanResult> results = scanner.scan("127.0.0.1", 1, 1024, true /* open only */);
+for (IPortScanResult r : results) {
+    // r.getHostAddress(), r.getPort()
+    // r.isAvailable(), r.isActive()
+    // r.getProtocol(), r.getApplication()
+}
+
+// With real-time listener callback
+scanner.scan("127.0.0.1", 1, 1024, null /* open and closed */,
+    result -> System.out.println(result.getPort() + " available=" + result.isAvailable()));
 ```
 
 

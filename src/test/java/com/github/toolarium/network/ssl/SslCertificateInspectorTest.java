@@ -43,7 +43,7 @@ public class SslCertificateInspectorTest {
     public void inspectLocalSslServerTest() throws Exception {
         int port = 9200;
         SSLContext sslContext = SSLContextFactory.getInstance().createSslContext(
-                SecurityManagerProviderFactory.getInstance().getSecurityManagerProvider("toolarium", "changit"));
+                SecurityManagerProviderFactory.getInstance().getSecurityManagerProvider("toolarium", "changit".toCharArray()));
 
         IHttpServer server = HttpServerFactory.getInstance().getServerInstance();
         server.start(new EchoService(), port, sslContext);

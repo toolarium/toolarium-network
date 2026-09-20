@@ -201,7 +201,7 @@ public class HttpDtoTest {
 
         // Set an SSL context
         javax.net.ssl.SSLContext sslContext = SSLContextFactory.getInstance().createSslContext(
-                SecurityManagerProviderFactory.getInstance().getSecurityManagerProvider("toolarium", "changit"));
+                SecurityManagerProviderFactory.getInstance().getSecurityManagerProvider("toolarium", "changit".toCharArray()));
         info.setSSLContext(sslContext);
 
         assertEquals("https", info.getProtocol());

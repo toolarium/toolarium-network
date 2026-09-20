@@ -81,7 +81,7 @@ public class HttpServerTest {
         int port = 8082;
         
         // create self signed certificate
-        ISecurityManagerProvider securityManagerProvider = SecurityManagerProviderFactory.getInstance().getSecurityManagerProvider("toolarium", "changit");
+        ISecurityManagerProvider securityManagerProvider = SecurityManagerProviderFactory.getInstance().getSecurityManagerProvider("toolarium", "changit".toCharArray());
         assertNotNull(securityManagerProvider);
 
         // get ssl context from factory

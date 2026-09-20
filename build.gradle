@@ -29,7 +29,7 @@ dependencies {
     implementation "com.github.toolarium:toolarium-common:1.1.0"
 
     // security library
-    implementation "com.github.toolarium:toolarium-security:1.1.6"
+    implementation "com.github.toolarium:toolarium-security:1.1.7"
 
     // logging
     implementation "org.slf4j:slf4j-api:${commonGradleSlf4jApiVersion}"

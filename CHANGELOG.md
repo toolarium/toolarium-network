@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [ 1.1.3 ] - 2026-09-20
+### Changed
+- Updated dependency `toolarium-security` from `1.1.6` to `1.1.7`.
+- Adapted all `SecurityManagerProviderFactory.getSecurityManagerProvider` call sites to the new `char[]` password parameter (`HttpServerTestUtil`, `HttpDtoTest`, `HttpServerTest`, `SslCertificateInspectorTest`).
 
 ## [ 1.1.2 ] - 2026-09-20
 ### Security

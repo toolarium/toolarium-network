@@ -89,7 +89,7 @@ public final class HttpServerTestUtil {
         
         if ("https".equals(httpRequestWrapper.uri().getScheme())) {
             // create self signed certificate
-            final ISecurityManagerProvider securityManagerProvider = SecurityManagerProviderFactory.getInstance().getSecurityManagerProvider("toolarium", "changit");
+            final ISecurityManagerProvider securityManagerProvider = SecurityManagerProviderFactory.getInstance().getSecurityManagerProvider("toolarium", "changit".toCharArray());
             
             // get ssl context
             sslContext = SSLContextFactory.getInstance().createSslContext(securityManagerProvider);
