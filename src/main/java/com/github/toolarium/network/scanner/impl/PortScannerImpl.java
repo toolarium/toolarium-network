@@ -13,15 +13,17 @@ import com.github.toolarium.network.scanner.analyze.IPortAnalyzer;
 import com.github.toolarium.network.scanner.analyze.impl.TCPConnectionPortAnalyzerImpl;
 import com.github.toolarium.network.scanner.dto.IPortScanResult;
 import com.github.toolarium.network.scanner.listener.IPortScanListener;
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,10 +33,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author patrick
  */
-public class PortScannerImpl implements IPortScanner {
+public class PortScannerImpl implements IPortScanner, Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(PortScannerImpl.class);
     private int numberOfThreads;
     private int timeout;
+    private final ExecutorService executor;
 
 
     /**
@@ -54,6 +57,7 @@ public class PortScannerImpl implements IPortScanner {
     public PortScannerImpl(int numberOfThreads, int timeout) {
         this.numberOfThreads = numberOfThreads;
         this.timeout = timeout;
+        this.executor = Executors.newFixedThreadPool(numberOfThreads);
     }
 
 
@@ -65,6 +69,9 @@ public class PortScannerImpl implements IPortScanner {
         // validate input
         final int startPort = prepareIntegerValue(inputStartPort, MIN_PORT, inputStartPort);
         final int endPort = prepareIntegerValue(inputEndPort, startPort, MAX_PORT);
+        if (inputEndPort > 0 && inputEndPort < startPort) {
+            LOG.warn("endPort [{}] is less than startPort [{}], scanning single port only.", inputEndPort, startPort);
+        }
         final List<String> hostList = prepareScanAddressList(scanAddress);
 
         final List<IPortScanResult> result = new ArrayList<IPortScanResult>();
@@ -78,18 +85,13 @@ public class PortScannerImpl implements IPortScanner {
 
         // prepare scan threads
         final List<IPortScanListener> portScanListenerList = preparePortScanListenerList(portScannerListeners);
-        final ExecutorService es = Executors.newFixedThreadPool(numberOfThreads);
         final List<Future<IPortScanResult>> futures = new ArrayList<Future<IPortScanResult>>();
         for (String hostAddress : hostList) {
             LOG.info("Scan ports on [{}] from range {} - {} (threads: {}, timeout: {})...", hostAddress, startPort, endPort, numberOfThreads, timeout);
             for (int port = startPort; port <= endPort; port++) {
-                futures.add(prepareNetworkAddressScanThread(es, hostAddress, port, timeout, portScanListenerList));
+                futures.add(prepareNetworkAddressScanThread(executor, hostAddress, port, timeout, portScanListenerList));
             }
-            
-            Collections.shuffle(futures); 
         }
-
-        es.shutdown();
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Wait until ended...");
@@ -102,6 +104,23 @@ public class PortScannerImpl implements IPortScanner {
             LOG.debug("Ended.");
         }
         return result;
+    }
+
+
+    /**
+     * @see java.io.Closeable#close()
+     */
+    @Override
+    public void close() throws IOException {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
 
@@ -205,7 +224,8 @@ public class PortScannerImpl implements IPortScanner {
             try {
                 return CIDRUtil.getInstance().getAllAddresses(scanAddress.trim());
             } catch (UnknownHostException e) {
-                // NOP
+                LOG.warn("Could not resolve CIDR range [{}]: {}", scanAddress.trim(), e.getMessage());
+                return new ArrayList<String>();
             }
         }
 

@@ -28,7 +28,7 @@ public abstract class AbstractConnectionHandler implements IHttpConnectionHandle
      */
     static final int DEFAULT_MAX_BODY_SIZE = 10 * 1024 * 1024;
     private static final String CRLF = System.lineSeparator();
-    private int maxBodySize = DEFAULT_MAX_BODY_SIZE;
+    private volatile int maxBodySize = DEFAULT_MAX_BODY_SIZE;
 
 
     /**
@@ -131,8 +131,12 @@ public abstract class AbstractConnectionHandler implements IHttpConnectionHandle
             return null;
         }
         
+        String version = "";
+        if (response.getVersion() != null) {
+            version = response.getVersion().replace("\r", "").replace("\n", "");
+        }
         StringBuilder result = new StringBuilder();
-        result.append(response.getVersion()).append(" ")
+        result.append(version).append(" ")
                     .append(response.getStatus())
                     .append(" ")
                     .append(HttpStatusUtil.getInstance().getStatusText(response.getStatus()))

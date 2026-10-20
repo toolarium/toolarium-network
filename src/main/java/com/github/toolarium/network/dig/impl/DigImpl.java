@@ -104,11 +104,33 @@ public class DigImpl implements IDig {
         if (recordTypes == null || recordTypes.length == 0) {
             return Collections.emptyList();
         }
-
-        List<IDigResult> results = new ArrayList<>();
-        for (DnsRecordType type : recordTypes) {
-            results.add(dig(hostname, type));
+        if (hostname == null || hostname.trim().isEmpty()) {
+            List<IDigResult> results = new ArrayList<>();
+            for (DnsRecordType type : recordTypes) {
+                results.add(new DigResult(hostname, type, Collections.emptyList(), false, 0, new IllegalArgumentException("Hostname is null or empty")));
+            }
+            return results;
         }
+
+        final String host = hostname.trim();
+        List<IDigResult> results = new ArrayList<>();
+
+        try {
+            DirContext ctx = createDirContext();
+            try {
+                for (DnsRecordType type : recordTypes) {
+                    results.add(digWithContext(host, type, ctx, System.currentTimeMillis()));
+                }
+            } finally {
+                ctx.close();
+            }
+        } catch (NamingException e) {
+            LOG.debug("Dig failed to create context for " + host + ": " + e.getMessage());
+            for (DnsRecordType type : recordTypes) {
+                results.add(new DigResult(host, type, Collections.emptyList(), false, 0, e));
+            }
+        }
+
         return results;
     }
 
@@ -192,7 +214,7 @@ public class DigImpl implements IDig {
 
         if (dnsServer != null && !dnsServer.trim().isEmpty()) {
             String trimmed = dnsServer.trim();
-            if (trimmed.contains("://") || trimmed.contains("/") || trimmed.contains(" ")) {
+            if (!trimmed.matches("[a-zA-Z0-9.\\-:\\[\\]]+")) {
                 throw new NamingException("Invalid DNS server address: " + trimmed);
             }
             env.put("java.naming.provider.url", "dns://" + trimmed);

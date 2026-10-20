@@ -6,6 +6,7 @@
 package com.github.toolarium.network.nslookup;
 
 import com.github.toolarium.network.nslookup.dto.INsLookupResult;
+import java.io.Closeable;
 import java.util.List;
 
 
@@ -15,7 +16,7 @@ import java.util.List;
  *
  * @author patrick
  */
-public interface INsLookup {
+public interface INsLookup extends Closeable {
 
     /**
      * Perform a forward DNS lookup — resolve a hostname to its IP addresses.

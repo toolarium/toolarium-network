@@ -46,7 +46,7 @@ public class HttpServerImpl implements IHttpServer {
     static final int DEFAULT_SOCKET_TIMEOUT = 30_000;
     static final int DEFAULT_WORKER_POOL_SIZE = 100;
     private static final Logger LOG = LoggerFactory.getLogger(HttpServerImpl.class);
-    private ServerSocket serverSocket;
+    private volatile ServerSocket serverSocket;
     private ExecutorService mainExecutor;
     private ExecutorService executor;
     private volatile boolean run;
@@ -130,6 +130,10 @@ public class HttpServerImpl implements IHttpServer {
             return;
         }
 
+        if (run) {
+            return;
+        }
+
         httpServerInformation.setPort(port);
         httpServerInformation.setSSLContext(sslContext);
 
@@ -147,6 +151,7 @@ public class HttpServerImpl implements IHttpServer {
         } else {
             serverSocket = new ServerSocket(httpServerInformation.getPort());
         }
+        serverSocket.setSoTimeout(1000);
 
         if (httpServerLogger != null) {
             httpServerLogger.logInfo("Start " + httpServerInformation.getProtocol() + " server on port " + httpServerInformation.getPort());
@@ -180,6 +185,8 @@ public class HttpServerImpl implements IHttpServer {
                             connectionHandler.init(socket, httpService, httpServerInformation, httpServerLogger, httpAccessLogger);
                             executor.execute(connectionHandler);
                         }
+                    } catch (java.net.SocketTimeoutException e) {
+                        // accept timed out — re-check run flag and continue
                     } catch (Exception e) {
                         if (serverSocket != null && !serverSocket.isClosed()) {
                             if (httpServerLogger != null) {

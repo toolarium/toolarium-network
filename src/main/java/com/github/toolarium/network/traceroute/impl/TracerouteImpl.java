@@ -54,6 +54,12 @@ public class TracerouteImpl implements ITraceroute {
 
     /**
      * @see com.github.toolarium.network.traceroute.ITraceroute#trace(java.lang.String, int)
+     *
+     * <p><b>Blocking:</b> This method blocks the calling thread. Hops are probed sequentially
+     *     (TTL 1, 2, … n) because each probe must complete before the next TTL can be tried.
+     *     Worst-case blocking time is {@code maxHops × timeout} milliseconds
+     *     (default: 30 × 2000 ms = 60 s). A total-deadline guard ensures this bound is respected
+     *     even if individual probes stall.</p>
      */
     @Override
     public ITracerouteResult trace(String host, int port) {
@@ -63,6 +69,7 @@ public class TracerouteImpl implements ITraceroute {
 
         final String target = host.trim();
         final long totalStart = System.currentTimeMillis();
+        final long totalDeadline = totalStart + (long) maxHops * timeout;
         String targetAddress = null;
 
         try {
@@ -77,6 +84,13 @@ public class TracerouteImpl implements ITraceroute {
         boolean reached = false;
 
         for (int ttl = 1; ttl <= maxHops && !reached; ttl++) {
+            if (System.currentTimeMillis() >= totalDeadline) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Traceroute total deadline reached at hop {}, stopping.", ttl);
+                }
+                break;
+            }
+
             TracerouteHop hop = probeHop(target, targetAddress, port, ttl);
             hops.add(hop);
 
@@ -123,11 +137,7 @@ public class TracerouteImpl implements ITraceroute {
      * @return the hop result
      */
     private TracerouteHop probeHop(String host, String targetAddress, int port, int ttl) {
-        Socket socket = null;
         try {
-            socket = new Socket();
-            socket.setSoTimeout(timeout);
-
             // Set TTL via the traffic class workaround — Java doesn't expose TTL directly on Socket.
             // We use InetAddress.isReachable with TTL for the probe instead.
             InetAddress target = InetAddress.getByName(host);
@@ -144,25 +154,25 @@ public class TracerouteImpl implements ITraceroute {
                 return new TracerouteHop(ttl, hopAddress, hopHostname, rtt, true);
             } else {
                 // Try TCP connect to detect intermediate hops
+                Socket socket = new Socket();
                 try {
+                    socket.setSoTimeout(timeout);
                     socket.connect(new InetSocketAddress(target, port), timeout);
                     rtt = System.currentTimeMillis() - start;
                     return new TracerouteHop(ttl, target.getHostAddress(), target.getCanonicalHostName(), rtt, true);
                 } catch (IOException e) {
                     // Hop timed out or refused
                     return new TracerouteHop(ttl, null, null, -1, false);
+                } finally {
+                    try {
+                        socket.close();
+                    } catch (IOException e) {
+                        // NOP
+                    }
                 }
             }
         } catch (IOException e) {
             return new TracerouteHop(ttl, null, null, -1, false);
-        } finally {
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    // NOP
-                }
-            }
         }
     }
 }

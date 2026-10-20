@@ -8,8 +8,8 @@ package com.github.toolarium.network.nslookup.impl;
 import com.github.toolarium.network.nslookup.INsLookup;
 import com.github.toolarium.network.nslookup.dto.INsLookupResult;
 import com.github.toolarium.network.nslookup.dto.NsLookupResult;
+import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -70,7 +70,7 @@ public class NsLookupImpl implements INsLookup {
         final long start = System.currentTimeMillis();
 
         try {
-            InetAddress[] addresses = resolveWithTimeout(host);
+            InetAddress[] addresses = InetAddress.getAllByName(host);
             long duration = System.currentTimeMillis() - start;
 
             String canonicalHostname = addresses[0].getCanonicalHostName();
@@ -116,7 +116,7 @@ public class NsLookupImpl implements INsLookup {
         final long start = System.currentTimeMillis();
 
         try {
-            InetAddress[] addresses = resolveWithTimeout(ip);
+            InetAddress[] addresses = InetAddress.getAllByName(ip);
             InetAddress addr = addresses[0];
             String hostname = addr.getCanonicalHostName();
             long duration = System.currentTimeMillis() - start;
@@ -189,19 +189,21 @@ public class NsLookupImpl implements INsLookup {
 
 
     /**
-     * Resolve with timeout using an executor.
-     *
-     * @param host the host to resolve
-     * @return the resolved addresses
-     * @throws Exception In case of an error
+     * @see java.io.Closeable#close()
      */
-    private InetAddress[] resolveWithTimeout(final String host) throws Exception {
-        Future<InetAddress[]> future = executor.submit(new Callable<InetAddress[]>() {
-            @Override
-            public InetAddress[] call() throws UnknownHostException {
-                return InetAddress.getAllByName(host);
+    @Override
+    public void close() throws IOException {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
             }
-        });
-        return future.get(timeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
+
+
+
 }

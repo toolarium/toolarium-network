@@ -74,24 +74,24 @@ public final class NetworkUtil {
     public String getHostname() {
         Properties prop = System.getProperties();
 
-        String hostname = prop.getProperty("hostname");
-        if (hostname != null && hostname.trim().length() > 0) {
+        String hostname = sanitizeHostname(prop.getProperty("hostname"));
+        if (hostname != null && hostname.length() > 0) {
             return hostname;
         }
 
-        hostname = prop.getProperty("HOSTNAME");
-        if (hostname != null && hostname.trim().length() > 0) {
+        hostname = sanitizeHostname(prop.getProperty("HOSTNAME"));
+        if (hostname != null && hostname.length() > 0) {
             return hostname;
         }
 
-        hostname = prop.getProperty("COMPUTERNAME");
-        if (hostname != null && hostname.trim().length() > 0) {
+        hostname = sanitizeHostname(prop.getProperty("COMPUTERNAME"));
+        if (hostname != null && hostname.length() > 0) {
             return hostname;
         }
 
         try {
-            hostname = InetAddress.getLocalHost().getHostName();
-            if (hostname != null && hostname.trim().length() > 0) {
+            hostname = sanitizeHostname(InetAddress.getLocalHost().getHostName());
+            if (hostname != null && hostname.length() > 0) {
                 return hostname;
             }
         } catch (UnknownHostException e) {
@@ -99,5 +99,27 @@ public final class NetworkUtil {
         }
 
         return "localhost";
+    }
+
+
+    /**
+     * Sanitize a hostname value: keep only valid hostname characters
+     * (letters, digits, hyphens, dots, underscores) and limit to 253 characters.
+     *
+     * @param value the raw value
+     * @return the sanitized value, or null if the input is null or blank
+     */
+    private String sanitizeHostname(String value) {
+        if (value == null) {
+            return null;
+        }
+        String sanitized = value.trim().replaceAll("[^a-zA-Z0-9.\\-_]", "");
+        if (sanitized.length() > 253) {
+            sanitized = sanitized.substring(0, 253);
+        }
+        if (sanitized.length() > 0) {
+            return sanitized;
+        }
+        return null;
     }
 }

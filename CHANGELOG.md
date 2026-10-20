@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [ 1.1.4 ] - 2026-09-20
+## [ 1.1.4 ] - 2026-10-20
+### Security
+- Fixed WHOIS query CRLF injection (`WhoisImpl`).
+- Fixed DNS server URL injection (`DigImpl`).
+- Fixed HTTP response status-line CRLF injection (`AbstractConnectionHandler`).
+- Migrated `CIDRUtil` logging from `java.util.logging` to SLF4J.
+- Fixed insecure hostname sourcing in `NetworkUtil`: system property values are now sanitized before use.
+
+### Changed
+- Fixed thread-safety issues in `HttpServerImpl` (volatile `serverSocket`, double-start guard, accept-loop shutdown).
+- Fixed `INsLookup` / `NsLookupImpl`: interface now extends `Closeable`; executor shuts down cleanly.
+- Fixed `PortScannerImpl`: executor promoted to instance field, implements `Closeable`; improved resilience logging.
+- Fixed `AbstractConnectionHandler.maxBodySize` declared `volatile`.
+- Fixed `DigImpl.digAll()` sharing a single `DirContext` across all record-type queries.
+- Fixed `NsLookupImpl` lookup path to call `InetAddress.getAllByName()` directly without an extra nested executor submit.
+- Fixed unbounded CIDR expansion in `CIDRUtil.getAllAddresses()` to prevent OOM.
+- Fixed `TracerouteImpl`: socket created only when needed; added total-deadline guard.
+- Updated dependency `toolarium-common` from `1.1.0` to `1.2.0`.
+- Updated dependency `toolarium-security` from `1.1.7` to `1.1.8`.
 
 ## [ 1.1.3 ] - 2026-09-20
 ### Changed

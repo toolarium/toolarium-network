@@ -14,8 +14,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -39,6 +40,8 @@ public final class CIDRUtil {
                                                         + "(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:)))(%.+)?s*"
                                                         + "/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$";
 
+    private static final Logger LOG = LoggerFactory.getLogger(CIDRUtil.class);
+    private static final int MAX_ADDRESS_COUNT = 65536;
     private Pattern ipv4RangeExpression;
     private Pattern ipv6RangeExpression;
 
@@ -230,19 +233,20 @@ public final class CIDRUtil {
             final CIDRInfo cidrInfo = parse(addressRange);
             final List<String> addrList = new ArrayList<>();
             if (cidrInfo.getStartIp().compareTo(cidrInfo.getEndIp()) <= 0) {
+                BigInteger rangeSize = cidrInfo.getEndIp().subtract(cidrInfo.getStartIp()).add(BigInteger.ONE);
+                if (rangeSize.compareTo(BigInteger.valueOf(MAX_ADDRESS_COUNT)) > 0) {
+                    throw new UnknownHostException("Address range too large: " + rangeSize + " addresses exceed limit of " + MAX_ADDRESS_COUNT);
+                }
                 for (BigInteger d = cidrInfo.getStartIp(); d.compareTo(cidrInfo.getEndIp()) <= 0; d = d.add(BigInteger.ONE)) {
                     try {
                         final InetAddress addr = cidrInfo.resolveAddress(d);
-                        final String ipv6Addr = shortIpv6Address(addr.getHostAddress()); 
+                        final String ipv6Addr = shortIpv6Address(addr.getHostAddress());
                         addrList.add(ipv6Addr);
-                        //if (LOG.isDebugEnabled()) {
-                        //    LOG.debug(" - " + addr.getHostAddress() + " -> " + ipv6Addr + " -> "+ cidrInfo.toBinaryString(addr));
-                        //}
                     } catch (UnknownHostException e) {
-                        Logger logger = Logger.getLogger(CIDRUtil.class.getName());
-                        logger.fine("Could not resolve address: " + d);
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Could not resolve address: {}", d);
+                        }
                     }
-                    
                 }
             }
 

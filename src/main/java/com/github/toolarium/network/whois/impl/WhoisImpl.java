@@ -76,6 +76,7 @@ public class WhoisImpl implements IWhois {
         } else {
             server = DEFAULT_WHOIS_SERVER;
         }
+        final String originalServer = server;
         String q = query.trim();
         long start = System.currentTimeMillis();
 
@@ -103,6 +104,9 @@ public class WhoisImpl implements IWhois {
 
             WhoisResult result = new WhoisResult(q, server, rawResponse, fields, true, duration, null);
             if (LOG.isDebugEnabled()) {
+                if (!server.equals(originalServer)) {
+                    LOG.debug("Whois referral chain: {} -> {}, result server: {}", originalServer, server, server);
+                }
                 LOG.debug("Whois: " + result);
             }
             return result;
@@ -130,7 +134,8 @@ public class WhoisImpl implements IWhois {
             socket.connect(new java.net.InetSocketAddress(server, WHOIS_PORT), timeout);
 
             OutputStream out = socket.getOutputStream();
-            out.write((query + "\r\n").getBytes(StandardCharsets.UTF_8));
+            String sanitizedQuery = query.replace("\r", "").replace("\n", "");
+            out.write((sanitizedQuery + "\r\n").getBytes(StandardCharsets.UTF_8));
             out.flush();
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
