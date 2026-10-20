@@ -53,13 +53,13 @@ public class TracerouteImpl implements ITraceroute {
 
 
     /**
-     * @see com.github.toolarium.network.traceroute.ITraceroute#trace(java.lang.String, int)
-     *
      * <p><b>Blocking:</b> This method blocks the calling thread. Hops are probed sequentially
-     *     (TTL 1, 2, … n) because each probe must complete before the next TTL can be tried.
-     *     Worst-case blocking time is {@code maxHops × timeout} milliseconds
-     *     (default: 30 × 2000 ms = 60 s). A total-deadline guard ensures this bound is respected
-     *     even if individual probes stall.</p>
+     * (TTL 1, 2, … n) because each probe must complete before the next TTL can be tried.
+     * Worst-case blocking time is {@code maxHops × timeout} milliseconds
+     * (default: 30 × 2000 ms = 60 s). A total-deadline guard ensures this bound is respected
+     * even if individual probes stall.</p>
+     *
+     * @see com.github.toolarium.network.traceroute.ITraceroute#trace(java.lang.String, int)
      */
     @Override
     public ITracerouteResult trace(String host, int port) {
