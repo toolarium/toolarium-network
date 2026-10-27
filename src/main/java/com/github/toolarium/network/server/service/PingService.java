@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,11 +42,12 @@ public class PingService extends AbstractHttpService {
         if (response.getBody() == null) {
             response.setBody("");
         }
-        
+
+        response.addHeader("Content-Type", "text/plain; charset=UTF-8");
         if (response.getBody() != null) {
-            response.addHeader(HttpHeaderUtil.CONTENT_LENGTH, "" + response.getBody().length());
+            response.addHeader(HttpHeaderUtil.CONTENT_LENGTH, "" + response.getBody().getBytes(StandardCharsets.UTF_8).length);
         }
-        
+
         return response;
     }
     
@@ -72,7 +74,9 @@ public class PingService extends AbstractHttpService {
             BufferedWriter writer = null;
 
             try {
-                socket = new Socket(host, port);
+                socket = new Socket();
+                socket.connect(new java.net.InetSocketAddress(host, port), 5000);
+                socket.setSoTimeout(5000);
                 String str = "TEST";
                 reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -82,9 +86,14 @@ public class PingService extends AbstractHttpService {
                 writer.flush();
                 reader.readLine();
                 result = (System.currentTimeMillis() - t1);
-                LOG.debug("Ping " + socket.getInetAddress() + ", reply from " + socket.getInetAddress() + " -> " + result + "ms");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Ping {}, reply from {} -> {}ms", socket.getInetAddress(), socket.getInetAddress(), result);
+                }
             } catch (IOException e) {
-                LOG.warn("Could not ping: " + e.getMessage(), e);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Could not ping: {}", e.getMessage(), e);
+                }
+                LOG.warn("Could not ping: {}", e.getMessage());
             } finally {
                 if (writer != null) {
                     try {

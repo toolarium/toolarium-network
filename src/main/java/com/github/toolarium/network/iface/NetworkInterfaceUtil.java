@@ -66,7 +66,10 @@ public final class NetworkInterfaceUtil {
             return result;
 
         } catch (SocketException e) {
-            LOG.warn("Could not enumerate network interfaces: " + e.getMessage(), e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not enumerate network interfaces: {}", e.getMessage(), e);
+            }
+            LOG.warn("Could not enumerate network interfaces: {}", e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -129,7 +132,9 @@ public final class NetworkInterfaceUtil {
             loopback = ni.isLoopback();
             virtual = ni.isVirtual();
         } catch (SocketException e) {
-            LOG.debug("Could not read interface properties for " + ni.getName() + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not read interface properties for {}: {}", ni.getName(), e.getMessage());
+            }
         }
 
         return new NetworkInterfaceInfo(ni.getName(), ni.getDisplayName(), macAddress, ipAddresses, mtu, up, loopback, virtual);

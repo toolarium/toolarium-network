@@ -70,12 +70,16 @@ public class TracerouteImpl implements ITraceroute {
         final String target = host.trim();
         final long totalStart = System.currentTimeMillis();
         final long totalDeadline = totalStart + (long) maxHops * timeout;
+        InetAddress targetInetAddress = null;
         String targetAddress = null;
 
         try {
-            targetAddress = InetAddress.getByName(target).getHostAddress();
+            targetInetAddress = InetAddress.getByName(target);
+            targetAddress = targetInetAddress.getHostAddress();
         } catch (UnknownHostException e) {
-            LOG.debug("Cannot resolve host: " + target);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Cannot resolve host: {}", target);
+            }
             return new TracerouteResult(target, null, new ArrayList<ITracerouteHop>(), false,
                     System.currentTimeMillis() - totalStart);
         }
@@ -91,7 +95,7 @@ public class TracerouteImpl implements ITraceroute {
                 break;
             }
 
-            TracerouteHop hop = probeHop(target, targetAddress, port, ttl);
+            TracerouteHop hop = probeHop(targetInetAddress, targetAddress, port, ttl);
             hops.add(hop);
 
             if (hop.isReached() && targetAddress.equals(hop.getAddress())) {
@@ -99,14 +103,14 @@ public class TracerouteImpl implements ITraceroute {
             }
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Hop: " + hop);
+                LOG.debug("Hop: {}", hop);
             }
         }
 
         long totalDuration = System.currentTimeMillis() - totalStart;
         TracerouteResult result = new TracerouteResult(target, targetAddress, hops, reached, totalDuration);
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Traceroute: " + result);
+            LOG.debug("Traceroute: {}", result);
         }
         return result;
     }
@@ -130,17 +134,14 @@ public class TracerouteImpl implements ITraceroute {
      * router hops cannot be discovered in pure Java without raw sockets. The TCP connect
      * fallback below still reports whether the final target is reachable.</p>
      *
-     * @param host the target host
-     * @param targetAddress the target IP address
+     * @param target the pre-resolved target InetAddress
+     * @param targetAddress the target IP address string
      * @param port the port
      * @param ttl the TTL value
      * @return the hop result
      */
-    private TracerouteHop probeHop(String host, String targetAddress, int port, int ttl) {
+    private TracerouteHop probeHop(InetAddress target, String targetAddress, int port, int ttl) {
         try {
-            // Set TTL via the traffic class workaround — Java doesn't expose TTL directly on Socket.
-            // We use InetAddress.isReachable with TTL for the probe instead.
-            InetAddress target = InetAddress.getByName(host);
             long start = System.currentTimeMillis();
             // NOTE: isReachable with TTL requires ICMP/root; without it the JVM falls back to
             // TCP port 7 (echo) — intermediate hop discovery will not work on most systems.

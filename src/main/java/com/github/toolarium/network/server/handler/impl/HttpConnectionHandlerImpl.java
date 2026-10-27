@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
  */
 public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(HttpConnectionHandlerImpl.class);
+    private static final String LOG_KV_FORMAT = "{}{}";
     private static AtomicLong counter = new AtomicLong();
     private Socket clientSocket;
     private IHttpService httpService;
@@ -77,7 +78,7 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
         
         try {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Handling server request #" + logId + ":");
+                LOG.debug("Handling server request #{}:", logId);
             }
             reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             IHttpRequest request = readHttpRequest(logHeader, reader);
@@ -96,7 +97,7 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
             }
         } catch (IOException e) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("I/O error handling request #" + logId + ": " + e.getMessage(), e);
+                LOG.debug("I/O error handling request #{}: {}", logId, e.getMessage(), e);
             }
         } finally {
             if (writer != null) {
@@ -117,7 +118,7 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
         
         if (LOG.isDebugEnabled()) {
             String duration = new TimeDifferenceFormatter(false, false).formatAsString(System.currentTimeMillis() - startTimestamp);
-            LOG.debug(StringUtil.getInstance().width(logHeader + "process duration", 34, ' ', false) + logOutputWrapper(duration)); 
+            LOG.debug(LOG_KV_FORMAT, StringUtil.getInstance().width(logHeader + "process duration", 34, ' ', false), logOutputWrapper(duration));
         }
     }
 
@@ -140,14 +141,14 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
             if (firstLine != null) {
                 sanitizedFirstLine = firstLine.replace("\r", "").replace("\n", "");
             }
-            LOG.debug(StringUtil.getInstance().width(logHeader + "request", 34, ' ', false) + logOutputWrapper(sanitizedFirstLine));
+            LOG.debug(LOG_KV_FORMAT, StringUtil.getInstance().width(logHeader + "request", 34, ' ', false), logOutputWrapper(sanitizedFirstLine));
         }
 
         // Always read headers — they are mandatory in HTTP. readHeaders() uses
         // blocking readLine() internally, so it waits for data correctly.
         request.setHeaders(HttpHeaderUtil.getInstance().readHeaders(reader));
         if (LOG.isDebugEnabled()) {
-            LOG.debug(StringUtil.getInstance().width(logHeader + "request headers", 34, ' ', false) + logOutputWrapper("" + request.getHeaders()));
+            LOG.debug(LOG_KV_FORMAT, StringUtil.getInstance().width(logHeader + "request headers", 34, ' ', false), logOutputWrapper("" + request.getHeaders()));
         }
 
         if (request.containsHeader(HttpHeaderUtil.CONTENT_LENGTH)) {
@@ -162,16 +163,16 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
                 throw new IOException("Negative Content-Length: " + length);
             }
             if (LOG.isDebugEnabled()) {
-                LOG.debug(StringUtil.getInstance().width(logHeader + "read length", 34, ' ', false) + logOutputWrapper("" + length));
+                LOG.debug(LOG_KV_FORMAT, StringUtil.getInstance().width(logHeader + "read length", 34, ' ', false), logOutputWrapper("" + length));
             }
             String body = readInBody(reader, length);
             request.setBody(body);
             if (LOG.isDebugEnabled()) {
-                LOG.debug(StringUtil.getInstance().width(logHeader + "request body", 34, ' ', false) + logOutputWrapper(body));
+                LOG.debug(LOG_KV_FORMAT, StringUtil.getInstance().width(logHeader + "request body", 34, ' ', false), logOutputWrapper(body));
             }
         } else {
             if (LOG.isDebugEnabled()) {
-                LOG.debug(StringUtil.getInstance().width(logHeader + "no length", 34, ' ', false));
+                LOG.debug("{}", StringUtil.getInstance().width(logHeader + "no length", 34, ' ', false));
             }
 
             // Without Content-Length, only read if data is already buffered.
@@ -206,7 +207,7 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
         if (statusLine != null && statusLine.length() > 0) {
             writer.write(statusLine);                    
             if (LOG.isDebugEnabled()) {
-                LOG.debug(StringUtil.getInstance().width(logHeader + "response", 34, ' ', false) + logOutputWrapper(statusLine.replace(System.lineSeparator(), ""))); 
+                LOG.debug(LOG_KV_FORMAT, StringUtil.getInstance().width(logHeader + "response", 34, ' ', false), logOutputWrapper(statusLine.replace("\r\n", "")));
             }
         }
 
@@ -215,7 +216,7 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
             writer.write(headers);                    
             
             if (LOG.isDebugEnabled()) {
-                LOG.debug(StringUtil.getInstance().width(logHeader + "response headers", 34, ' ', false) + logOutputWrapper(headers)); 
+                LOG.debug(LOG_KV_FORMAT, StringUtil.getInstance().width(logHeader + "response headers", 34, ' ', false), logOutputWrapper(headers));
             }
         }
 
@@ -225,7 +226,7 @@ public class HttpConnectionHandlerImpl extends AbstractConnectionHandler {
         if (body != null && body.length() > 0) {
             writer.write(body);
             if (LOG.isDebugEnabled()) {
-                LOG.debug(StringUtil.getInstance().width(logHeader + "response body", 34, ' ', false) + logOutputWrapper(body)); 
+                LOG.debug(LOG_KV_FORMAT, StringUtil.getInstance().width(logHeader + "response body", 34, ' ', false), logOutputWrapper(body));
             }
         }
     }

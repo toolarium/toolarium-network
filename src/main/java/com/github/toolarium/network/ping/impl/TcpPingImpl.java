@@ -146,7 +146,10 @@ public class TcpPingImpl implements IPing {
             }
 
         } catch (IOException e) {
-            LOG.warn("Ping selector error: " + e.getMessage(), e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Ping selector error: {}", e.getMessage(), e);
+            }
+            LOG.warn("Ping selector error: {}", e.getMessage());
         } finally {
             if (selector != null) {
                 try {
@@ -212,7 +215,9 @@ public class TcpPingImpl implements IPing {
                 results.add(new PingResult(entry.getHost(), entry.getPort(), false, -1, e));
             }
             latch.countDown();
-            LOG.debug("Could not connect to " + entry.getHost() + ":" + entry.getPort() + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not connect to {}:{}: {}", entry.getHost(), entry.getPort(), e.getMessage());
+            }
         }
     }
 
@@ -258,7 +263,9 @@ public class TcpPingImpl implements IPing {
                     results.add(new PingResult(entry.getHost(), entry.getPort(), false, -1, e));
                 }
                 latch.countDown();
-                LOG.debug("Connection failed to " + entry.getHost() + ":" + entry.getPort() + ": " + e.getMessage());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Connection failed to {}:{}: {}", entry.getHost(), entry.getPort(), e.getMessage());
+                }
             }
         }
     }

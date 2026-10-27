@@ -5,7 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [ 1.1.5 ] - 2026-10-20
+## [ 1.1.5 ] - 2026-10-27
+### Security
+- Fixed HTTP response line separator to use RFC-compliant CRLF.
+- Added `Content-Type: text/plain` header in echo and ping services to prevent reflected XSS.
+- Sanitized control characters in access log output.
+- Fixed `Content-Length` computation to use byte count instead of char count.
+
+### Changed
+- Replaced thread-unsafe date formatters with thread-safe alternatives in console loggers.
+- Fixed executor leak on server socket creation failure.
+- Added timeout control to single DNS lookups.
+- Avoided extra reverse DNS round-trip in forward lookups.
+- Eliminated redundant DNS resolution per hop in traceroute.
+- Improved port scanner endPort clamping with explicit warning.
+- Fixed batch DNS lookup to return failed results on timeout instead of silently dropping them.
+- Fixed plain socket leak in SSL certificate inspector.
+- Fixed fragment variable check in HTTP server test utility.
+- Added missing HTTP status codes (429, 502, 504); return `UNKNOWN` for unmapped codes.
+- Added connect and read timeout in ping service client.
+- Enforced parameterized SLF4J logging and debug guards across all classes.
 
 ## [ 1.1.4 ] - 2026-10-20
 ### Security

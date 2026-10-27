@@ -70,13 +70,15 @@ public class WakeOnLanImpl implements IWakeOnLan {
 
             WakeOnLanResult result = new WakeOnLanResult(macAddress.trim(), broadcast, WOL_PORT, true, null);
             if (LOG.isDebugEnabled()) {
-                LOG.debug("WOL: " + result);
+                LOG.debug("WOL: {}", result);
             }
             return result;
 
         } catch (Exception e) {
             WakeOnLanResult result = new WakeOnLanResult(macAddress, broadcastAddress, WOL_PORT, false, e);
-            LOG.debug("WOL failed for " + macAddress + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("WOL failed for {}: {}", macAddress, e.getMessage());
+            }
             return result;
         }
     }

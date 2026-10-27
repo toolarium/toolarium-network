@@ -58,12 +58,15 @@ public final class HttpStatusUtil {
             case 403: return "FORBIDDEN"; // [GET/PUT/PATCH/DELETE] The caller has no permission.
             case 404: return "NOT FOUND"; // [GET/PUT/PATCH/DELETE] The server has not found anything matching the Request-URI.
             case 405: return "Method Not Allowed";
-            case 408: return "TIMEOUT"; // [GET/PUT/PATCH/DELETE] The request timeout. 
-            case 409: return "CONFLICT"; // [GET/PUT/PATCH/DELETE] Indicates that the request could not be processed because of conflict. 
-            case 413: return "TOO LARGE"; // [GET/PUT/PATCH/DELETE]  Too Large: The payload request entity is too large. 
+            case 408: return "TIMEOUT"; // [GET/PUT/PATCH/DELETE] The request timeout.
+            case 409: return "CONFLICT"; // [GET/PUT/PATCH/DELETE] Indicates that the request could not be processed because of conflict.
+            case 413: return "TOO LARGE"; // [GET/PUT/PATCH/DELETE]  Too Large: The payload request entity is too large.
+            case 429: return "TOO MANY REQUESTS"; // [*] Rate limiting.
             case 500: return "INTERNAL SERVER ERROR"; // [*] The server encountered an internal error.
+            case 502: return "BAD GATEWAY"; // [*] The server received an invalid response from the upstream server.
             case 503: return "SERVICE UNAVAILABLE"; // [*] The service is temporarily unavailable.
-            default: return "OK";
+            case 504: return "GATEWAY TIMEOUT"; // [*] The upstream server did not respond in time.
+            default: return "UNKNOWN";
         }
     }
 }

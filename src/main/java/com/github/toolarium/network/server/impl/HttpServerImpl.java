@@ -144,14 +144,22 @@ public class HttpServerImpl implements IHttpServer {
                 new LinkedBlockingQueue<>(workerPoolSize * 2),
                 new ThreadPoolExecutor.CallerRunsPolicy());
 
-        if (sslContext != null) {
-            SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
-            SSLServerSocket s = (SSLServerSocket) ssf.createServerSocket(httpServerInformation.getPort());
-            serverSocket = s;
-        } else {
-            serverSocket = new ServerSocket(httpServerInformation.getPort());
+        try {
+            if (sslContext != null) {
+                SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
+                SSLServerSocket s = (SSLServerSocket) ssf.createServerSocket(httpServerInformation.getPort());
+                serverSocket = s;
+            } else {
+                serverSocket = new ServerSocket(httpServerInformation.getPort());
+            }
+            serverSocket.setSoTimeout(1000);
+        } catch (IOException e) {
+            mainExecutor.shutdownNow();
+            executor.shutdownNow();
+            mainExecutor = null;
+            executor = null;
+            throw e;
         }
-        serverSocket.setSoTimeout(1000);
 
         if (httpServerLogger != null) {
             httpServerLogger.logInfo("Start " + httpServerInformation.getProtocol() + " server on port " + httpServerInformation.getPort());

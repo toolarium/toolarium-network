@@ -59,12 +59,14 @@ public class SslCertificateInspectorImpl implements ISslCertificateInspector {
         long start = System.currentTimeMillis();
 
         SSLSocket socket = null;
+        java.net.Socket plain = null;
         try {
-            SSLSocketFactory factory = createTrustAllFactory();
-            java.net.Socket plain = new java.net.Socket();
+            plain = new java.net.Socket();
             plain.setSoTimeout(timeout);
             plain.connect(new java.net.InetSocketAddress(h, port), timeout);
+            final SSLSocketFactory factory = createTrustAllFactory();
             socket = (SSLSocket) factory.createSocket(plain, h, port, true);
+            plain = null; // SSLSocket now owns the plain socket (autoClose=true)
             socket.startHandshake();
 
             SSLSession session = socket.getSession();
@@ -92,18 +94,27 @@ public class SslCertificateInspectorImpl implements ISslCertificateInspector {
             SslCertificateInfo result = new SslCertificateInfo(h, port, certIdentity, sans, tlsSession, duration);
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug("SSL inspect: " + result);
+                LOG.debug("SSL inspect: {}", result);
             }
             return result;
 
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - start;
-            LOG.debug("SSL inspect failed for " + h + ":" + port + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SSL inspect failed for {}:{}: {}", h, port, e.getMessage());
+            }
             return new SslCertificateInfo(h, port, duration, e);
         } finally {
             if (socket != null) {
                 try {
                     socket.close();
+                } catch (Exception e) {
+                    // NOP
+                }
+            }
+            if (plain != null) {
+                try {
+                    plain.close();
                 } catch (Exception e) {
                     // NOP
                 }
@@ -158,7 +169,9 @@ public class SslCertificateInspectorImpl implements ISslCertificateInspector {
                 }
             }
         } catch (Exception e) {
-            LOG.debug("Could not extract SANs: " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not extract SANs: {}", e.getMessage());
+            }
         }
         return sans;
     }

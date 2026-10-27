@@ -68,9 +68,12 @@ public class PortScannerImpl implements IPortScanner, Closeable {
     public List<IPortScanResult> scan(String scanAddress, int inputStartPort, int inputEndPort, Boolean filterIsAvailable, IPortScanListener... portScannerListeners) {
         // validate input
         final int startPort = prepareIntegerValue(inputStartPort, MIN_PORT, inputStartPort);
-        final int endPort = prepareIntegerValue(inputEndPort, startPort, MAX_PORT);
+        int endPort;
         if (inputEndPort > 0 && inputEndPort < startPort) {
-            LOG.warn("endPort [{}] is less than startPort [{}], scanning single port only.", inputEndPort, startPort);
+            LOG.warn("endPort [{}] is less than startPort [{}], clamping endPort to startPort.", inputEndPort, startPort);
+            endPort = startPort;
+        } else {
+            endPort = prepareIntegerValue(inputEndPort, startPort, MAX_PORT);
         }
         final List<String> hostList = prepareScanAddressList(scanAddress);
 

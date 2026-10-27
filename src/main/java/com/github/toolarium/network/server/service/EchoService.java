@@ -10,6 +10,7 @@ import com.github.toolarium.network.server.dto.IHttpRequest;
 import com.github.toolarium.network.server.dto.IHttpResponse;
 import com.github.toolarium.network.server.logger.IHttpServerLogger;
 import com.github.toolarium.network.server.util.HttpHeaderUtil;
+import java.nio.charset.StandardCharsets;
 
 
 /**
@@ -42,10 +43,11 @@ public class EchoService extends AbstractHttpService {
             response.setBody("");
         }
 
+        response.addHeader("Content-Type", "text/plain; charset=UTF-8");
         if (response.getBody() != null) {
-            response.addHeader(HttpHeaderUtil.CONTENT_LENGTH, "" + response.getBody().length());
+            response.addHeader(HttpHeaderUtil.CONTENT_LENGTH, "" + response.getBody().getBytes(StandardCharsets.UTF_8).length);
         }
-        
+
         return response;
     }
 }

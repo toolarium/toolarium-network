@@ -121,13 +121,15 @@ public class HttpClientUtilImpl implements IHttpClientUtil {
                     response.body(), response.headers().map(), duration);
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug("HTTP " + method + ": " + result);
+                LOG.debug("HTTP {}: {}", method, result);
             }
             return result;
 
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - start;
-            LOG.debug("HTTP " + method + " failed for " + url + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("HTTP {} failed for {}: {}", method, url, e.getMessage());
+            }
             return new HttpClientResult(url, method, duration, e);
         }
     }

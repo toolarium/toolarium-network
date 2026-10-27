@@ -70,10 +70,10 @@ public class NsLookupImpl implements INsLookup {
         final long start = System.currentTimeMillis();
 
         try {
-            InetAddress[] addresses = InetAddress.getAllByName(host);
+            InetAddress[] addresses = resolveWithTimeout(host);
             long duration = System.currentTimeMillis() - start;
 
-            String canonicalHostname = addresses[0].getCanonicalHostName();
+            String canonicalHostname = addresses[0].getHostName();
             List<String> addressList = new ArrayList<>();
             for (InetAddress addr : addresses) {
                 addressList.add(addr.getHostAddress());
@@ -81,14 +81,16 @@ public class NsLookupImpl implements INsLookup {
 
             NsLookupResult result = new NsLookupResult(host, canonicalHostname, addressList, true, duration, null);
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Forward lookup: " + result);
+                LOG.debug("Forward lookup: {}", result);
             }
             return result;
 
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - start;
             NsLookupResult result = new NsLookupResult(host, null, Collections.emptyList(), false, duration, e);
-            LOG.debug("Forward lookup failed for " + host + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Forward lookup failed for {}: {}", host, e.getMessage());
+            }
             return result;
         }
     }
@@ -116,7 +118,7 @@ public class NsLookupImpl implements INsLookup {
         final long start = System.currentTimeMillis();
 
         try {
-            InetAddress[] addresses = InetAddress.getAllByName(ip);
+            InetAddress[] addresses = resolveWithTimeout(ip);
             InetAddress addr = addresses[0];
             String hostname = addr.getCanonicalHostName();
             long duration = System.currentTimeMillis() - start;
@@ -126,14 +128,16 @@ public class NsLookupImpl implements INsLookup {
 
             NsLookupResult result = new NsLookupResult(ip, hostname, addressList, true, duration, null);
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Reverse lookup: " + result);
+                LOG.debug("Reverse lookup: {}", result);
             }
             return result;
 
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - start;
             NsLookupResult result = new NsLookupResult(ip, null, Collections.emptyList(), false, duration, e);
-            LOG.debug("Reverse lookup failed for " + ip + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Reverse lookup failed for {}: {}", ip, e.getMessage());
+            }
             return result;
         }
     }
@@ -175,16 +179,61 @@ public class NsLookupImpl implements INsLookup {
         }
 
         List<INsLookupResult> results = new ArrayList<>();
-        for (Future<INsLookupResult> future : futures) {
+        for (int i = 0; i < futures.size(); i++) {
+            Future<INsLookupResult> future = futures.get(i);
             try {
                 INsLookupResult result = future.get(timeout, TimeUnit.MILLISECONDS);
                 results.add(result);
+            } catch (java.util.concurrent.TimeoutException e) {
+                future.cancel(true);
+                String query = queries[i];
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Batch lookup timed out for: {}", query);
+                }
+                results.add(new NsLookupResult(query, null, Collections.emptyList(), false, timeout,
+                        new java.net.UnknownHostException("DNS resolution timed out for: " + query)));
             } catch (Exception e) {
-                LOG.debug("Batch lookup timed out or failed: " + e.getMessage());
+                future.cancel(true);
+                String query = queries[i];
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Batch lookup failed for {}: {}", query, e.getMessage());
+                }
+                results.add(new NsLookupResult(query, null, Collections.emptyList(), false, 0, e));
             }
         }
 
         return results;
+    }
+
+
+    /**
+     * Resolve a hostname/IP with timeout using the shared executor.
+     *
+     * @param host the hostname or IP address
+     * @return the resolved addresses
+     * @throws java.net.UnknownHostException if resolution times out
+     * @throws Exception if resolution fails
+     */
+    private InetAddress[] resolveWithTimeout(final String host) throws Exception {
+        Future<InetAddress[]> future = executor.submit(new Callable<InetAddress[]>() {
+            @Override
+            public InetAddress[] call() throws Exception {
+                return InetAddress.getAllByName(host);
+            }
+        });
+
+        try {
+            return future.get(timeout, TimeUnit.MILLISECONDS);
+        } catch (java.util.concurrent.TimeoutException e) {
+            future.cancel(true);
+            throw new java.net.UnknownHostException("DNS resolution timed out for: " + host);
+        } catch (java.util.concurrent.ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof Exception) {
+                throw (Exception) cause;
+            }
+            throw e;
+        }
     }
 
 

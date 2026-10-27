@@ -7,9 +7,9 @@ package com.github.toolarium.network.server.logger.impl;
 
 import com.github.toolarium.network.server.logger.IHttpServerLogger;
 import java.io.PrintStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 
 /**
@@ -20,15 +20,14 @@ import java.util.Date;
 public class ConsoleHttpServerLogger implements IHttpServerLogger {
     private PrintStream out = System.out;
     private PrintStream err = System.err;
-    private DateFormat logFormat;
+    private final DateTimeFormatter logFormat;
 
-    
+
     /**
      * Constructor for ConsoleHttpServerLogger
      */
     public ConsoleHttpServerLogger() {
-        logFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-        //logFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        logFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
     }
 
     
@@ -75,7 +74,7 @@ public class ConsoleHttpServerLogger implements IHttpServerLogger {
      */
     protected String formatLog(String info) {
         StringBuilder b = new StringBuilder();
-        b.append(logFormat.format(new Date()));
+        b.append(logFormat.format(ZonedDateTime.now()));
         b.append(" | ");
         b.append(info);
         return b.toString();   

@@ -92,12 +92,14 @@ public final class ProxyDetector {
             }
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Proxies for " + url + ": " + result);
+                LOG.debug("Proxies for {}: {}", url, result);
             }
             return result;
 
         } catch (Exception e) {
-            LOG.debug("Proxy detection failed for " + url + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Proxy detection failed for {}: {}", url, e.getMessage());
+            }
             return Collections.singletonList(new ProxyInfo("DIRECT", null, -1));
         }
     }

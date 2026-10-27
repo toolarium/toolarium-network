@@ -49,14 +49,25 @@ public class HttpServerUtilTest {
 
 
     /**
-     * Test unknown status code returns default "OK".
+     * Test unknown status code returns "UNKNOWN".
      */
     @Test
     public void unknownStatusCodeTest() {
-        assertEquals("OK", HttpStatusUtil.getInstance().getStatusText(999));
-        assertEquals("OK", HttpStatusUtil.getInstance().getStatusText(0));
-        assertEquals("OK", HttpStatusUtil.getInstance().getStatusText(-1));
-        assertEquals("OK", HttpStatusUtil.getInstance().getStatusText(418)); // I'm a teapot — not in the map
+        assertEquals("UNKNOWN", HttpStatusUtil.getInstance().getStatusText(999));
+        assertEquals("UNKNOWN", HttpStatusUtil.getInstance().getStatusText(0));
+        assertEquals("UNKNOWN", HttpStatusUtil.getInstance().getStatusText(-1));
+        assertEquals("UNKNOWN", HttpStatusUtil.getInstance().getStatusText(418)); // I'm a teapot — not in the map
+    }
+
+
+    /**
+     * Test newly added status codes.
+     */
+    @Test
+    public void newStatusCodesTest() {
+        assertEquals("TOO MANY REQUESTS", HttpStatusUtil.getInstance().getStatusText(429));
+        assertEquals("BAD GATEWAY", HttpStatusUtil.getInstance().getStatusText(502));
+        assertEquals("GATEWAY TIMEOUT", HttpStatusUtil.getInstance().getStatusText(504));
     }
 
 

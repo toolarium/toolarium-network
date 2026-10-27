@@ -90,7 +90,9 @@ public class DigImpl implements IDig {
         } catch (NamingException e) {
             long duration = System.currentTimeMillis() - start;
             DigResult result = new DigResult(host, recordType, Collections.emptyList(), false, duration, e);
-            LOG.debug("Dig failed for " + host + " " + recordType + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Dig failed for {} {}: {}", host, recordType, e.getMessage());
+            }
             return result;
         }
     }
@@ -125,7 +127,9 @@ public class DigImpl implements IDig {
                 ctx.close();
             }
         } catch (NamingException e) {
-            LOG.debug("Dig failed to create context for " + host + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Dig failed to create context for {}: {}", host, e.getMessage());
+            }
             for (DnsRecordType type : recordTypes) {
                 results.add(new DigResult(host, type, Collections.emptyList(), false, 0, e));
             }
@@ -157,7 +161,9 @@ public class DigImpl implements IDig {
                 ctx.close();
             }
         } catch (NamingException e) {
-            LOG.debug("Dig failed to create context for " + host + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Dig failed to create context for {}: {}", host, e.getMessage());
+            }
         }
 
         return results;
@@ -181,7 +187,7 @@ public class DigImpl implements IDig {
 
             DigResult result = new DigResult(host, recordType, records, true, duration, null);
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Dig: " + result);
+                LOG.debug("Dig: {}", result);
             }
             return result;
         } catch (NamingException e) {
@@ -189,12 +195,14 @@ public class DigImpl implements IDig {
             if (isNoRecordsException(e)) {
                 DigResult result = new DigResult(host, recordType, Collections.emptyList(), true, duration, null);
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Dig (no records): " + result);
+                    LOG.debug("Dig (no records): {}", result);
                 }
                 return result;
             }
             DigResult result = new DigResult(host, recordType, Collections.emptyList(), false, duration, e);
-            LOG.debug("Dig failed for " + host + " " + recordType + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Dig failed for {} {}: {}", host, recordType, e.getMessage());
+            }
             return result;
         }
     }

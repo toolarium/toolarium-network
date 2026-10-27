@@ -27,7 +27,7 @@ public abstract class AbstractConnectionHandler implements IHttpConnectionHandle
      * Default maximum request body size: 10 MB.
      */
     static final int DEFAULT_MAX_BODY_SIZE = 10 * 1024 * 1024;
-    private static final String CRLF = System.lineSeparator();
+    private static final String CRLF = "\r\n";
     private volatile int maxBodySize = DEFAULT_MAX_BODY_SIZE;
 
 

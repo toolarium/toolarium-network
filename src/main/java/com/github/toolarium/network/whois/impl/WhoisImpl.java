@@ -107,13 +107,15 @@ public class WhoisImpl implements IWhois {
                 if (!server.equals(originalServer)) {
                     LOG.debug("Whois referral chain: {} -> {}, result server: {}", originalServer, server, server);
                 }
-                LOG.debug("Whois: " + result);
+                LOG.debug("Whois: {}", result);
             }
             return result;
 
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - start;
-            LOG.debug("Whois failed for " + q + ": " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Whois failed for {}: {}", q, e.getMessage());
+            }
             return new WhoisResult(q, server, null, Collections.emptyMap(), false, duration, e);
         }
     }
@@ -206,7 +208,7 @@ public class WhoisImpl implements IWhois {
                 return true;
             }
         }
-        LOG.warn("Ignoring WHOIS referral to non-allowlisted server: " + referral);
+        LOG.warn("Ignoring WHOIS referral to non-allowlisted server: {}", referral);
         return false;
     }
 

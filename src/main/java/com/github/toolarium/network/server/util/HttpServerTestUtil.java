@@ -83,10 +83,13 @@ public final class HttpServerTestUtil {
         try {
             uri = new URI(uri.getScheme().toLowerCase(Locale.US), "localhost" + ":" + uri.getPort(), uri.getPath(), uri.getQuery(), uri.getFragment());
         } catch (URISyntaxException e) {
-            LOG.warn("Error occured: " + e.getMessage(), e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Error occured: {}", e.getMessage(), e);
+            }
+            LOG.warn("Error occured: {}", e.getMessage());
         }
         final HttpRequestWrapper httpRequestWrapper = new HttpRequestWrapper(uri, httpRequest);
-        
+
         if ("https".equals(httpRequestWrapper.uri().getScheme())) {
             // create self signed certificate
             final ISecurityManagerProvider securityManagerProvider = SecurityManagerProviderFactory.getInstance().getSecurityManagerProvider("toolarium", "changit".toCharArray());
@@ -127,7 +130,10 @@ public final class HttpServerTestUtil {
         try {
             uri = new URI(uri.getScheme().toLowerCase(Locale.US), "localhost" + ":" + uri.getPort(), uri.getPath(), uri.getQuery(), uri.getFragment());
         } catch (URISyntaxException e) {
-            LOG.warn("Error occured: " + e.getMessage(), e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Error occured: {}", e.getMessage(), e);
+            }
+            LOG.warn("Error occured: {}", e.getMessage());
         }
         final HttpRequestWrapper httpRequestWrapper = new HttpRequestWrapper(uri, httpRequest);
 
@@ -157,7 +163,7 @@ public final class HttpServerTestUtil {
      */
     private HttpResponse<String> executeCall(IHttpServer httpServer, HttpClient httpClient, HttpRequest httpRequest) throws GeneralSecurityException, IOException {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Server hostname: " + httpServer.getHttpServerInformation().getHostname() + ":" + httpServer.getHttpServerInformation().getPort());
+            LOG.debug("Server hostname: {}:{}", httpServer.getHttpServerInformation().getHostname(), httpServer.getHttpServerInformation().getPort());
         }
         ThreadUtil.getInstance().sleep(100L);
 
@@ -172,7 +178,7 @@ public final class HttpServerTestUtil {
         
         if (response != null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Response: [" + response.body() + "]");
+                LOG.debug("Response: [{}]", response.body());
             }
         }
         
@@ -243,7 +249,7 @@ public final class HttpServerTestUtil {
             }
 
             if (fragment != null && !fragment.isBlank()) {
-                if (!query.startsWith("#")) {
+                if (!fragment.startsWith("#")) {
                     builder.append("#");
                 }
                 builder.append(fragment.trim());

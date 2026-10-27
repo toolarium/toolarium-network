@@ -10,9 +10,9 @@ import com.github.toolarium.network.server.dto.IHttpResponse;
 import com.github.toolarium.network.server.dto.IHttpServerInformation;
 import com.github.toolarium.network.server.logger.IHttpAccessLogger;
 import java.io.PrintStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 /**
  * Implements the http access logger
@@ -23,14 +23,14 @@ public class ConsoleHttpAccessLogger implements IHttpAccessLogger {
     private static final String SPACE = " ";
     private static final String DASH = "-";
     private PrintStream out = System.out;
-    private DateFormat logFormat;
+    private final DateTimeFormatter logFormat;
 
 
     /**
      * Constructor for ConsoleHttpAccessLogger
      */
     public ConsoleHttpAccessLogger() {
-        logFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
+        logFormat = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss Z", Locale.US);
     }
 
     
@@ -67,9 +67,9 @@ public class ConsoleHttpAccessLogger implements IHttpAccessLogger {
         b.append(SPACE);
         b.append(DASH).append(SPACE).append(DASH);
         b.append(SPACE);
-        b.append("[").append(logFormat.format(new Date())).append("]"); // serverInformation.getHostname();
+        b.append("[").append(logFormat.format(ZonedDateTime.now())).append("]"); // serverInformation.getHostname();
         b.append(SPACE);
-        b.append("\"").append(handleNullValue(request.getMethod())).append(SPACE).append(handleNullValue(request.getPath())).append(SPACE).append(handleNullValue(request.getVersion())).append("\"");
+        b.append("\"").append(sanitize(handleNullValue(request.getMethod()))).append(SPACE).append(sanitize(handleNullValue(request.getPath()))).append(SPACE).append(sanitize(handleNullValue(request.getVersion()))).append("\"");
         b.append(SPACE);
         b.append(response.getStatus());
         b.append(SPACE);
@@ -94,7 +94,7 @@ public class ConsoleHttpAccessLogger implements IHttpAccessLogger {
 
     /**
      * Handle null values
-     * 
+     *
      * @param value the value
      * @return the prepared value
      */
@@ -103,6 +103,27 @@ public class ConsoleHttpAccessLogger implements IHttpAccessLogger {
             return "-";
         }
         return value;
+    }
+
+
+    /**
+     * Sanitize a string for log output by removing control characters.
+     *
+     * @param value the value
+     * @return the sanitized value
+     */
+    private String sanitize(String value) {
+        if (value == null) {
+            return "-";
+        }
+        StringBuilder sb = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c >= 0x20 && c != 0x7F) {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 }
 
